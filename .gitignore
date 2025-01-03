@@ -1,0 +1,12 @@
+# Composer
+/vendor
+
+# Thumbnails
+.DS_Store
+Thumbs.db
+Zone.Identifier
+
+# IDEs
+.idea
+.vscode
+*.po~

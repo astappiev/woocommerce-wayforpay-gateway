@@ -1,0 +1,35 @@
+{
+  "name": "astappiev/wp-wayforpay-gateway",
+  "description": "Wayforpay Payment Gateway for WooCommerce",
+  "type": "wordpress-plugin",
+  "license": "GPL-3.0",
+  "authors": [
+    {
+      "name": "Dev team WayForPay",
+      "email": "support@wayforpay.com"
+    },
+    {
+      "name": "Oleh Astappiev",
+      "email": "oleh@astappiev.me"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/astappiev/wp-wayforpay-gateway/issues",
+    "source": "https://github.com/astappiev/wp-wayforpay-gateway"
+  },
+  "require": {
+    "php": ">=7.2"
+  },
+  "require-dev": {
+    "wp-coding-standards/wpcs": "^3.0"
+  },
+  "scripts": {
+    "lint": "vendor/bin/phpcs --standard=WordPress --extensions=php --ignore=vendor -ps .",
+    "fix": "vendor/bin/phpcbf --standard=WordPress --extensions=php --ignore=vendor -ps ."
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  }
+}
