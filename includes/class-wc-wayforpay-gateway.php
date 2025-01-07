@@ -309,21 +309,27 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	}
 
 	private function get_gateway_language(): string {
-		return substr( get_bloginfo( 'language' ), 0, 2 );
+		$lang = substr( get_bloginfo( 'language' ), 0, 2 );
+		if ( $lang == 'uk' ) {
+			$lang = 'ua';
+		}
+		return $lang;
 	}
 
 	/**
 	 * Process the service callback and update the order status accordingly.
+	 *
+	 * @throws Exception
 	 */
-	protected function handle_service_callback( $response ) {
+	protected function handle_service_callback( $response ): void {
 		list($orderId,) = explode( self::WAYFORPAY_REFERENCE_SUFFIX, $response['orderReference'] );
 		$order          = wc_get_order( $orderId );
 		if ( $order === false ) {
-			return __( 'An error has occurred during payment. Please contact us to ensure your order has submitted.', 'woocommerce-wayforpay-payments' );
+			throw new Exception( __( 'An error has occurred during payment. Please contact us to ensure your order has submitted.', 'woocommerce-wayforpay-payments' ) );
 		}
 
-		if ( $this->merchant_id !== $response['merchantAccount'] ) {
-			return __( 'An error has occurred during payment. Merchant data is incorrect.', 'woocommerce-wayforpay-payments' );
+		if ( $this->merchant_account !== $response['merchantAccount'] ) {
+			throw new Exception( __( 'An error has occurred during payment. Merchant data is incorrect.', 'woocommerce-wayforpay-payments' ) );
 		}
 
 		$responseSignature = $response['merchantSignature'];
