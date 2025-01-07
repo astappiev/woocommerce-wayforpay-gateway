@@ -4,11 +4,22 @@ if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
 	return;
 }
 
+/**
+ * WayForPay Payment Gateway
+ *
+ * Documentation:
+ * - Pay https://wiki.wayforpay.com/en/view/852102
+ * - Response codes https://wiki.wayforpay.com/en/view/852131
+ */
 class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
-	protected $url = 'https://secure.wayforpay.com/pay';
+	const WAYFORPAY_URL           = 'https://secure.wayforpay.com/pay';
+	const WAYFORPAY_CALLBACK_NAME = 'wayforpay_callback';
 
 	const ORDER_APPROVED = 'Approved';
 	const ORDER_REFUNDED = 'Refunded';
+	const ORDER_VOIDED   = 'Voided';
+	const ORDER_DECLINED = 'Declined';
+	const ORDER_EXPIRED  = 'Expired';
 	const ORDER_SUFFIX   = '_woo_w4p_';
 
 	protected $response_signature_keys = array(
@@ -37,7 +48,6 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	protected $merchant_id;
 	protected $secretKey;
 
-	protected $msg;
 	protected $redirect_page_id;
 
 	public function __construct() {
@@ -57,7 +67,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		$this->secretKey   = $this->settings['secret_key'];
 		$this->description = $this->settings['description'];
 
-		add_action( 'woocommerce_api_' . strtolower( get_class( $this ) ), array( $this, 'check_wayforpay_response' ) );
+		add_action( 'woocommerce_api_' . self::WAYFORPAY_CALLBACK_NAME, array( $this, 'receive_service_callback' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 		add_action( 'woocommerce_receipt_wayforpay', array( &$this, 'receipt_page' ) );
 	}
@@ -119,13 +129,6 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 				'type'        => 'text',
 				'description' => __( 'URL of success page', 'woocommerce-wayforpay-payments' ),
 				'default'     => '',
-				'desc_tip'    => true,
-			),
-			'serviceUrl'       => array(
-				'title'       => __( 'Service URL', 'woocommerce-wayforpay-payments' ),
-				'options'     => $this->wayforpay_get_pages( __( 'Select Page', 'woocommerce-wayforpay-payments' ) ),
-				'type'        => 'select',
-				'description' => __( 'URL with result of transaction page', 'woocommerce-wayforpay-payments' ),
 				'desc_tip'    => true,
 			),
 		);
@@ -210,7 +213,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	 * Generate form with fields
 	 */
 	protected function generateForm( $data ): string {
-		$form = '<form method="post" id="form_wayforpay" action="' . $this->url . '" accept-charset="utf-8">';
+		$form = '<form method="post" id="form_wayforpay" action="' . self::WAYFORPAY_URL . '" accept-charset="utf-8">';
 		foreach ( $data as $k => $v ) {
 			$form .= $this->printInput( $k, $v );
 		}
@@ -237,24 +240,6 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		return $str;
 	}
 
-	public function getAnswerToGateWay( $data ): string {
-		$time              = time();
-		$responseToGateway = array(
-			'orderReference' => $data['orderReference'],
-			'status'         => 'accept',
-			'time'           => $time,
-		);
-		$sign              = array();
-		foreach ( $responseToGateway as $dataValue ) {
-			$sign [] = $dataValue;
-		}
-		$sign                           = implode( ';', $sign );
-		$sign                           = hash_hmac( 'md5', $sign, $this->secretKey );
-		$responseToGateway['signature'] = $sign;
-
-		return json_encode( $responseToGateway );
-	}
-
 	/**
 	 * Generate wayforpay button link
 	 */
@@ -273,7 +258,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			'currency'       => $currency,
 			'amount'         => $order->get_total(),
 			'returnUrl'      => $this->getCallbackUrl() . '?key=' . $order->get_order_key() . '&order=' . $order_id,
-			'serviceUrl'     => $this->getCallbackUrl( true ),
+			'serviceUrl'     => wc_get_endpoint_url( 'wc-api', self::WAYFORPAY_CALLBACK_NAME ),
 			'language'       => $this->getLanguage(),
 		);
 
@@ -324,25 +309,22 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		);
 	}
 
-	private function getCallbackUrl( bool $service = false ) {
+	private function getCallbackUrl() {
 		$redirect_url = ( $this->redirect_page_id === '' || $this->redirect_page_id === 0 ) ? get_site_url() . '/' : get_permalink( $this->redirect_page_id );
-		if ( ! $service ) {
-			if ( isset( $this->settings['returnUrl_m'] ) && trim( $this->settings['returnUrl_m'] ) !== '' ) {
-				return trim( $this->settings['returnUrl_m'] );
-			}
-			return $redirect_url;
+		if ( isset( $this->settings['returnUrl_m'] ) && trim( $this->settings['returnUrl_m'] ) !== '' ) {
+			return trim( $this->settings['returnUrl_m'] );
 		}
-
-		return add_query_arg( 'wc-api', get_class( $this ), $redirect_url );
+		return $redirect_url;
 	}
 
 	private function getLanguage() {
 		return substr( get_bloginfo( 'language' ), 0, 2 );
 	}
 
-	protected function isPaymentValid( $response ) {
-		global $woocommerce;
-
+	/**
+	 * Process the service callback and update the order status accordingly.
+	 */
+	protected function handle_service_callback( $response ) {
 		list($orderId,) = explode( self::ORDER_SUFFIX, $response['orderReference'] );
 		$order          = wc_get_order( $orderId );
 		if ( $order === false ) {
@@ -359,31 +341,68 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			die( __( 'An error has occurred during payment. Signature is not valid.', 'woocommerce-wayforpay-payments' ) );
 		}
 
-		if ( $response['transactionStatus'] === self::ORDER_APPROVED ) {
-			// $order->update_status('processing');
-			$order->update_status( 'completed' );
-			$order->payment_complete();
-			$order->add_order_note( __( 'WayForPay payment successful.<br/>WayForPay ID: ', 'woocommerce-wayforpay-payments' ) . ' (' . ( $response['orderReference'] ?? '-' ) . ')' );
-			return true;
-		} elseif ( $response['transactionStatus'] === self::ORDER_REFUNDED ) {
-			$order->update_status( 'cancelled' );
-			$order->add_order_note( __( 'Refund payment.', 'woocommerce-wayforpay-payments' ) );
-			return true;
+		$order_note = sprintf( __( 'Transaction updated, current status: %s', 'woocommerce-wayforpay-payments' ), $response['transactionStatus'] );
+		switch ( $response['transactionStatus'] ) {
+			case self::ORDER_APPROVED:
+				$order->payment_complete();
+				$order_note = sprintf( __( 'Payment successful: %1$s %2$s.', 'woocommerce-wayforpay-payments' ), $response['amount'], $response['currency'] );
+
+				global $woocommerce;
+				if ( $woocommerce->cart && ! $woocommerce->cart->is_empty() ) {
+					$woocommerce->cart->empty_cart();
+				}
+				break;
+			case self::ORDER_REFUNDED:
+			case self::ORDER_VOIDED:
+				$order->update_status( 'refunded' );
+				$order_note = sprintf( __( 'Refunded %1$s %2$s.', 'woocommerce-wayforpay-payments' ), $response['amount'], $response['currency'] );
+				break;
+			case self::ORDER_EXPIRED:
+				$order->update_status( 'failed' );
+				$order_note = __( 'Payment expired.', 'woocommerce-wayforpay-payments' );
+				break;
+			case self::ORDER_DECLINED:
+				$order->update_status( 'failed' );
+				$order_note = sprintf( __( 'Payment failed: %1$s - %2$s.', 'woocommerce-wayforpay-payments' ), $response['reasonCode'] ?? 'N/A', $response['reason'] ?? 'N/A' );
+				break;
 		}
 
-		$woocommerce->cart->empty_cart();
-
-		return false;
+		$order_note .= '<br/>' . sprintf( __( 'WayForPay ID: %s', 'woocommerce-wayforpay-payments' ), $response['orderReference'] );
+		$order->add_order_note( $order_note );
 	}
 
 	/**
-	 * Check response on service url
+	 * Generates response to the service callback, to let the WayForPay know that the callback was processed.
 	 */
-	function check_wayforpay_response() {
-		$data        = json_decode( file_get_contents( 'php://input' ), true );
-		$paymentInfo = $this->isPaymentValid( $data );
-		if ( $paymentInfo === true ) {
-			echo $this->getAnswerToGateWay( $data );
+	public function respond_service_callback( $data ): string {
+		$responseToGateway = array(
+			'orderReference' => $data['orderReference'],
+			'status'         => 'accept',
+			'time'           => time(),
+		);
+
+		$sign = array();
+		foreach ( $responseToGateway as $dataValue ) {
+			$sign [] = $dataValue;
+		}
+		$sign = implode( ';', $sign );
+		$sign = hash_hmac( 'md5', $sign, $this->secretKey );
+
+		$responseToGateway['signature'] = $sign;
+		return json_encode( $responseToGateway );
+	}
+
+	/**
+	 * This will be called when the service callback is received.
+	 */
+	function receive_service_callback(): void {
+		$data = json_decode( file_get_contents( 'php://input' ), true );
+
+		try {
+			$this->handle_service_callback( $data );
+			echo $this->respond_service_callback( $data );
+		} catch ( Exception $e ) {
+			echo $e->getMessage();
 		}
 		exit;
 	}
