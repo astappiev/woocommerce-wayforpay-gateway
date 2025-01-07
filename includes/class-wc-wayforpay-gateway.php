@@ -13,7 +13,6 @@ if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
  */
 class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	const WAYFORPAY_URL              = 'https://secure.wayforpay.com/pay';
-	const WAYFORPAY_CALLBACK_NAME    = 'wayforpay_callback';
 	const WAYFORPAY_REFERENCE_SUFFIX = '_woo_w4p_';
 
 	const ORDER_APPROVED = 'Approved';
@@ -48,31 +47,29 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	protected $merchant_id;
 	protected $secretKey;
 
-	protected $redirect_page_id;
-
 	public function __construct() {
 		$this->id                 = 'wayforpay';
 		$this->method_title       = 'WayForPay';
 		$this->method_description = __( 'Card payments, Apple Pay and Google Pay.', 'woocommerce-wayforpay-payments' );
 		$this->has_fields         = false;
-		$this->init_form_fields();
+
 		$this->init_settings();
 		if ( $this->settings['showlogo'] === 'yes' ) {
 			$this->icon = WAYFORPAY_PATH . 'public/images/w4p.png';
 		}
-		$this->title            = $this->settings['title'];
-		$this->redirect_page_id = $this->settings['returnUrl'];
+		$this->init_form_fields();
 
+		$this->title       = $this->settings['title'];
+		$this->description = $this->settings['description'];
 		$this->merchant_id = $this->settings['merchant_account'];
 		$this->secretKey   = $this->settings['secret_key'];
-		$this->description = $this->settings['description'];
 
-		add_action( 'woocommerce_api_' . self::WAYFORPAY_CALLBACK_NAME, array( $this, 'receive_service_callback' ) );
+		add_action( 'woocommerce_api_' . $this->id . '_callback', array( $this, 'receive_service_callback' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
-		add_action( 'woocommerce_receipt_wayforpay', array( &$this, 'receipt_page' ) );
+		add_action( 'woocommerce_receipt_' . $this->id, array( &$this, 'receipt_page' ) );
 	}
 
-	function init_form_fields() {
+	function init_form_fields(): void {
 		$this->form_fields = array(
 			'enabled'          => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-wayforpay-payments' ),
@@ -138,7 +135,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	 * Admin Panel Options
 	 * - Options for bits like 'title' and availability on a country-by-country basis
 	 */
-	public function admin_options() {
+	public function admin_options(): void {
 		echo '<h3>' . __( 'WayForPay.com', 'woocommerce-wayforpay-payments' ) . '</h3>';
 		echo '<p>' . __( 'Payment gateway', 'woocommerce-wayforpay-payments' ) . '</p>';
 		echo '<table class="form-table">';
@@ -150,7 +147,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	/**
 	 *  There are no payment fields for techpro, but we want to show the description if set.
 	 */
-	function payment_fields() {
+	function payment_fields(): void {
 		if ( $this->description ) {
 			echo wpautop( wptexturize( $this->description ) );
 		}
@@ -159,7 +156,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Receipt Page
 	 */
-	function receipt_page( $order ) {
+	function receipt_page( $order ): void {
 		global $woocommerce;
 
 		echo '<p>' . __( 'Thank you for your order, you will now be redirected to the WayForPay payment page.', 'woocommerce-wayforpay-payments' ) . '</p>';
@@ -248,8 +245,8 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			'orderDate'      => strtotime( $order->get_date_created() ),
 			'currency'       => $currency,
 			'amount'         => $order->get_total(),
-			'returnUrl'      => $this->get_callback_url() . '?key=' . $order->get_order_key() . '&order=' . $order_id,
-			'serviceUrl'     => wc_get_endpoint_url( 'wc-api', self::WAYFORPAY_CALLBACK_NAME ),
+			'returnUrl'      => $this->get_callback_url( $order ),
+			'serviceUrl'     => wc_get_endpoint_url( 'wc-api', $this->id . '_callback', get_site_url() ),
 			'language'       => $this->get_gateway_language(),
 		);
 
@@ -297,19 +294,21 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 		return array(
 			'result'   => 'success',
-			'redirect' => add_query_arg( 'order', $order->get_id(), add_query_arg( 'key', $order->get_order_key(), $checkout_payment_url ) ),
+			'redirect' => $checkout_payment_url,
 		);
 	}
 
-	private function get_callback_url() {
-		$redirect_url = ( $this->redirect_page_id === '' || $this->redirect_page_id === 0 ) ? get_site_url() . '/' : get_permalink( $this->redirect_page_id );
+	private function get_callback_url( $order ): string {
+		$redirect_url = $this->get_return_url( $order );
 		if ( isset( $this->settings['returnUrl_m'] ) && trim( $this->settings['returnUrl_m'] ) !== '' ) {
-			return trim( $this->settings['returnUrl_m'] );
+			$redirect_url = trim( $this->settings['returnUrl_m'] );
+		} elseif ( $this->settings['returnUrl'] ) {
+			$redirect_url = get_permalink( $this->settings['returnUrl'] );
 		}
-		return $redirect_url;
+		return add_query_arg( 'key', $order->get_order_key(), $redirect_url );
 	}
 
-	private function get_gateway_language() {
+	private function get_gateway_language(): string {
 		return substr( get_bloginfo( 'language' ), 0, 2 );
 	}
 
