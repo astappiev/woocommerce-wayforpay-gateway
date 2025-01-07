@@ -37,7 +37,7 @@ function wayforpay_gateway_declare_hpos_compatibility(): void {
 add_action( 'plugins_loaded', 'wayforpay_gateway_init', 0 );
 
 function wayforpay_gateway_init(): void {
-	require_once WAYFORPAY_DIR . 'woocommerce-gateway-wayforpay.php';
+	require_once WAYFORPAY_DIR . 'includes/class-wc-wayforpay-gateway.php';
 }
 
 add_filter( 'woocommerce_payment_gateways', 'wayforpay_gateway_add_gateway' );

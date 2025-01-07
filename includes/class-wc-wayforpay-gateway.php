@@ -48,7 +48,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		$this->init_form_fields();
 		$this->init_settings();
 		if ( $this->settings['showlogo'] === 'yes' ) {
-			$this->icon = WAYFORPAY_PATH . 'assets/w4p.png';
+			$this->icon = WAYFORPAY_PATH . 'public/images/w4p.png';
 		}
 		$this->title            = $this->settings['title'];
 		$this->redirect_page_id = $this->settings['returnUrl'];
