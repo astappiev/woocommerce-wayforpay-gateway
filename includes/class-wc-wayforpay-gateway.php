@@ -12,17 +12,17 @@ if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
  * - Response codes https://wiki.wayforpay.com/en/view/852131
  */
 class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
-	const WAYFORPAY_URL           = 'https://secure.wayforpay.com/pay';
-	const WAYFORPAY_CALLBACK_NAME = 'wayforpay_callback';
+	const WAYFORPAY_URL              = 'https://secure.wayforpay.com/pay';
+	const WAYFORPAY_CALLBACK_NAME    = 'wayforpay_callback';
+	const WAYFORPAY_REFERENCE_SUFFIX = '_woo_w4p_';
 
 	const ORDER_APPROVED = 'Approved';
 	const ORDER_REFUNDED = 'Refunded';
 	const ORDER_VOIDED   = 'Voided';
 	const ORDER_DECLINED = 'Declined';
 	const ORDER_EXPIRED  = 'Expired';
-	const ORDER_SUFFIX   = '_woo_w4p_';
 
-	protected $response_signature_keys = array(
+	const SIGNATURE_KEYS_RESPONSE = array(
 		'merchantAccount',
 		'orderReference',
 		'amount',
@@ -33,7 +33,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		'reasonCode',
 	);
 
-	protected $signature_keys = array(
+	const SIGNATURE_KEYS = array(
 		'merchantAccount',
 		'merchantDomainName',
 		'orderReference',
@@ -168,15 +168,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		$woocommerce->cart->empty_cart();
 	}
 
-	public function getRequestSignature( $options ): string {
-		return $this->getSignature( $options, $this->signature_keys );
-	}
-
-	public function getResponseSignature( $options ): string {
-		return $this->getSignature( $options, $this->response_signature_keys );
-	}
-
-	public function getSignature( $option, $keys, bool $hashOnly = false ): string {
+	public function get_signature( $option, $keys, bool $hashOnly = false ): string {
 		$hash = array();
 		foreach ( $keys as $dataKey ) {
 			if ( ! isset( $option[ $dataKey ] ) ) {
@@ -198,24 +190,23 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		}
 	}
 
-	public function fillPayForm( $data ): string {
+	public function sign_gateway_form( $data ): void {
 		$data['merchantAccount']               = $this->merchant_id;
 		$data['merchantAuthType']              = 'simpleSignature';
 		$data['merchantDomainName']            = $_SERVER['SERVER_NAME'];
 		$data['merchantTransactionSecureType'] = 'AUTO';
 
-		$data['merchantSignature'] = $this->getRequestSignature( $data );
-		$data['signString']        = $this->getSignature( $data, $this->signature_keys, true );
-		return $this->generateForm( $data );
+		$data['merchantSignature'] = $this->get_signature( $data, self::SIGNATURE_KEYS );
+		$data['signString']        = $this->get_signature( $data, self::SIGNATURE_KEYS, true );
 	}
 
 	/**
 	 * Generate form with fields
 	 */
-	protected function generateForm( $data ): string {
+	protected function render_gateway_form( $data ): string {
 		$form = '<form method="post" id="form_wayforpay" action="' . self::WAYFORPAY_URL . '" accept-charset="utf-8">';
 		foreach ( $data as $k => $v ) {
-			$form .= $this->printInput( $k, $v );
+			$form .= $this->print_input( $k, $v );
 		}
 
 		$button = "<img style='position:absolute; top:50%; left:47%; margin-top:-125px; margin-left:-60px;' src='' alt=''>
@@ -229,13 +220,13 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Print inputs in a form
 	 */
-	protected function printInput( $name, $val ): string {
+	protected function print_input( $name, $val ): string {
 		$str = '';
 		if ( ! is_array( $val ) ) {
 			return '<input type="hidden" name="' . $name . '" value="' . htmlspecialchars( $val ) . '">' . "\n<br />";
 		}
 		foreach ( $val as $v ) {
-			$str .= $this->printInput( $name . '[]', $v );
+			$str .= $this->print_input( $name . '[]', $v );
 		}
 		return $str;
 	}
@@ -253,13 +244,13 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		);
 
 		$wayforpay_args = array(
-			'orderReference' => $order->get_id() . self::ORDER_SUFFIX . time(),
+			'orderReference' => $order->get_id() . self::WAYFORPAY_REFERENCE_SUFFIX . time(),
 			'orderDate'      => strtotime( $order->get_date_created() ),
 			'currency'       => $currency,
 			'amount'         => $order->get_total(),
-			'returnUrl'      => $this->getCallbackUrl() . '?key=' . $order->get_order_key() . '&order=' . $order_id,
+			'returnUrl'      => $this->get_callback_url() . '?key=' . $order->get_order_key() . '&order=' . $order_id,
 			'serviceUrl'     => wc_get_endpoint_url( 'wc-api', self::WAYFORPAY_CALLBACK_NAME ),
-			'language'       => $this->getLanguage(),
+			'language'       => $this->get_gateway_language(),
 		);
 
 		$items = $order->get_items();
@@ -293,7 +284,8 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		);
 		$wayforpay_args = array_merge( $wayforpay_args, $client );
 
-		return $this->fillPayForm( $wayforpay_args );
+		$this->sign_gateway_form( $wayforpay_args );
+		return $this->render_gateway_form( $wayforpay_args );
 	}
 
 	/**
@@ -309,7 +301,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		);
 	}
 
-	private function getCallbackUrl() {
+	private function get_callback_url() {
 		$redirect_url = ( $this->redirect_page_id === '' || $this->redirect_page_id === 0 ) ? get_site_url() . '/' : get_permalink( $this->redirect_page_id );
 		if ( isset( $this->settings['returnUrl_m'] ) && trim( $this->settings['returnUrl_m'] ) !== '' ) {
 			return trim( $this->settings['returnUrl_m'] );
@@ -317,7 +309,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		return $redirect_url;
 	}
 
-	private function getLanguage() {
+	private function get_gateway_language() {
 		return substr( get_bloginfo( 'language' ), 0, 2 );
 	}
 
@@ -325,7 +317,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	 * Process the service callback and update the order status accordingly.
 	 */
 	protected function handle_service_callback( $response ) {
-		list($orderId,) = explode( self::ORDER_SUFFIX, $response['orderReference'] );
+		list($orderId,) = explode( self::WAYFORPAY_REFERENCE_SUFFIX, $response['orderReference'] );
 		$order          = wc_get_order( $orderId );
 		if ( $order === false ) {
 			return __( 'An error has occurred during payment. Please contact us to ensure your order has submitted.', 'woocommerce-wayforpay-payments' );
@@ -337,7 +329,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 		$responseSignature = $response['merchantSignature'];
 
-		if ( $this->getResponseSignature( $response ) !== $responseSignature ) {
+		if ( $this->get_signature( $response, self::SIGNATURE_KEYS_RESPONSE ) !== $responseSignature ) {
 			die( __( 'An error has occurred during payment. Signature is not valid.', 'woocommerce-wayforpay-payments' ) );
 		}
 
