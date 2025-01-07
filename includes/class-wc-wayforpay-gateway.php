@@ -15,6 +15,13 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	const WAYFORPAY_URL              = 'https://secure.wayforpay.com/pay';
 	const WAYFORPAY_REFERENCE_SUFFIX = '_woo_w4p_';
 
+	const WAYFORPAY_MERCHANT_TEST    = 'WAYFORPAY_MERCHANT_TEST';
+	const WAYFORPAY_MERCHANT_ACCOUNT = 'WAYFORPAY_MERCHANT_ACCOUNT';
+	const WAYFORPAY_MERCHANT_SECRET  = 'WAYFORPAY_MERCHANT_SECRET';
+
+	const TEST_MERCHANT_ACCOUNT = 'test_merch_n1';
+	const TEST_MERCHANT_SECRET  = 'flk3409refn54t54t*FNJRET';
+
 	const ORDER_APPROVED = 'Approved';
 	const ORDER_REFUNDED = 'Refunded';
 	const ORDER_VOIDED   = 'Voided';
@@ -44,8 +51,8 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		'productPrice',
 	);
 
-	protected $merchant_id;
-	protected $secretKey;
+	protected $merchant_account;
+	protected $merchant_secret;
 
 	public function __construct() {
 		$this->id                 = 'wayforpay';
@@ -57,12 +64,20 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		if ( $this->settings['showlogo'] === 'yes' ) {
 			$this->icon = WAYFORPAY_PATH . 'public/images/w4p.png';
 		}
+
+		if ( defined( self::WAYFORPAY_MERCHANT_TEST ) && constant( self::WAYFORPAY_MERCHANT_TEST ) ) {
+			$this->settings['merchant_account'] = self::TEST_MERCHANT_ACCOUNT;
+			$this->settings['merchant_secret']  = self::TEST_MERCHANT_SECRET;
+		} elseif ( defined( self::WAYFORPAY_MERCHANT_ACCOUNT ) && defined( self::WAYFORPAY_MERCHANT_SECRET ) ) {
+			$this->settings['merchant_account'] = constant( self::WAYFORPAY_MERCHANT_ACCOUNT );
+			$this->settings['merchant_secret']  = constant( self::WAYFORPAY_MERCHANT_SECRET );
+		}
 		$this->init_form_fields();
 
-		$this->title       = $this->settings['title'];
-		$this->description = $this->settings['description'];
-		$this->merchant_id = $this->settings['merchant_account'];
-		$this->secretKey   = $this->settings['secret_key'];
+		$this->title            = $this->settings['title'];
+		$this->description      = $this->settings['description'];
+		$this->merchant_account = $this->settings['merchant_account'];
+		$this->merchant_secret  = $this->settings['merchant_secret'];
 
 		add_action( 'woocommerce_api_' . $this->id . '_callback', array( $this, 'receive_service_callback' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -70,7 +85,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	}
 
 	function init_form_fields(): void {
-		$this->form_fields = array(
+		$this->form_fields        = array(
 			'enabled'          => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-wayforpay-payments' ),
 				'type'        => 'checkbox',
@@ -93,18 +108,16 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 				'desc_tip'    => true,
 			),
 			'merchant_account' => array(
-				'title'       => __( 'Merchant Login', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'Merchant Account', 'woocommerce-wayforpay-payments' ),
 				'type'        => 'text',
-				'description' => __( 'Given to Merchant by wayforpay.com', 'woocommerce-wayforpay-payments' ),
-				'default'     => 'test_merch_n1',
+				'description' => __( 'Seller identifier. This value is assigned to you by WayForPay.', 'woocommerce-wayforpay-payments' ),
 				'desc_tip'    => true,
 			),
-			'secret_key'       => array(
+			'merchant_secret'  => array(
 				'title'       => __( 'Merchant Secret key', 'woocommerce-wayforpay-payments' ),
 				'type'        => 'text',
-				'description' => __( 'Given to Merchant by wayforpay.com', 'woocommerce-wayforpay-payments' ),
+				'description' => __( 'Signature secret key. This value is assigned to you by WayForPay.', 'woocommerce-wayforpay-payments' ),
 				'desc_tip'    => true,
-				'default'     => 'flk3409refn54t54t*FNJRET',
 			),
 			'showlogo'         => array(
 				'title'       => __( 'Show Logo', 'woocommerce-wayforpay-payments' ),
@@ -129,6 +142,24 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 				'desc_tip'    => true,
 			),
 		);
+		$constant_merchant        = false;
+		$constant_controlled_hint = __( 'The value is controlled by the %s constant.', 'woocommerce-wayforpay-payments' );
+		if ( defined( self::WAYFORPAY_MERCHANT_TEST ) && constant( self::WAYFORPAY_MERCHANT_TEST ) ) {
+			$this->form_fields['merchant_account']['description'] = sprintf( $constant_controlled_hint, self::WAYFORPAY_MERCHANT_TEST );
+			$this->form_fields['merchant_secret']['description']  = sprintf( $constant_controlled_hint, self::WAYFORPAY_MERCHANT_TEST );
+			$constant_merchant                                    = true;
+		} elseif ( defined( self::WAYFORPAY_MERCHANT_ACCOUNT ) && defined( self::WAYFORPAY_MERCHANT_SECRET ) ) {
+			$this->form_fields['merchant_account']['description'] = sprintf( $constant_controlled_hint, self::WAYFORPAY_MERCHANT_ACCOUNT );
+			$this->form_fields['merchant_secret']['description']  = sprintf( $constant_controlled_hint, self::WAYFORPAY_MERCHANT_SECRET );
+			$constant_merchant                                    = true;
+		}
+
+		if ( $constant_merchant ) {
+			$this->form_fields['merchant_account']['disabled'] = true;
+			$this->form_fields['merchant_account']['desc_tip'] = false;
+			$this->form_fields['merchant_secret']['disabled']  = true;
+			$this->form_fields['merchant_secret']['desc_tip']  = false;
+		}
 	}
 
 	/**
@@ -183,12 +214,12 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		if ( $hashOnly ) {
 			return base64_encode( $hash );
 		} else {
-			return hash_hmac( 'md5', $hash, $this->secretKey );
+			return hash_hmac( 'md5', $hash, $this->merchant_secret );
 		}
 	}
 
 	public function sign_gateway_form( $data ): void {
-		$data['merchantAccount']               = $this->merchant_id;
+		$data['merchantAccount']               = $this->merchant_account;
 		$data['merchantAuthType']              = 'simpleSignature';
 		$data['merchantDomainName']            = $_SERVER['SERVER_NAME'];
 		$data['merchantTransactionSecureType'] = 'AUTO';
@@ -383,7 +414,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			$sign [] = $dataValue;
 		}
 		$sign = implode( ';', $sign );
-		$sign = hash_hmac( 'md5', $sign, $this->secretKey );
+		$sign = hash_hmac( 'md5', $sign, $this->merchant_secret );
 
 		$responseToGateway['signature'] = $sign;
 		return json_encode( $responseToGateway );
