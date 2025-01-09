@@ -1,0 +1,9 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wayforpay/gateway",
+	"version": "0.0.1",
+	"title": "WayForPay Gateway",
+	"category": "payments",
+	"editorScript": "file:./index.js"
+}

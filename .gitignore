@@ -1,5 +1,6 @@
 # Composer
 /vendor
+/node_modules
 
 # Thumbnails
 .DS_Store

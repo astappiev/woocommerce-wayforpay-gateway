@@ -17,6 +17,8 @@
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
  */
 
+use Automattic\WooCommerce\Utilities\FeaturesUtil;
+
 define( 'WAYFORPAY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WAYFORPAY_PATH', plugin_dir_url( __FILE__ ) );
 
@@ -29,15 +31,32 @@ function wayforpay_gateway_i18n(): void {
 add_action( 'before_woocommerce_init', 'wayforpay_gateway_declare_hpos_compatibility' );
 
 function wayforpay_gateway_declare_hpos_compatibility(): void {
-	if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
-		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__ );
+	if ( class_exists( FeaturesUtil::class ) ) {
+		FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__ );
 	}
+}
+
+add_action( 'before_woocommerce_init', 'wayforpay_gateway_declare_cart_checkout_blocks_compatibility' );
+
+function wayforpay_gateway_declare_cart_checkout_blocks_compatibility(): void {
+	if ( class_exists( FeaturesUtil::class ) ) {
+		FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
+	}
+}
+
+add_action( 'woocommerce_blocks_loaded', 'wayforpay_gateway_register_payment_method');
+
+function wayforpay_gateway_register_payment_method(): void {
+	add_action('woocommerce_blocks_payment_method_type_registration', function ( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
+		$payment_method_registry->register( new WC_WayForPay_Gateway_Blocks() );
+	});
 }
 
 add_action( 'plugins_loaded', 'wayforpay_gateway_init', 0 );
 
 function wayforpay_gateway_init(): void {
 	require_once WAYFORPAY_DIR . 'includes/class-wc-wayforpay-gateway.php';
+	require_once WAYFORPAY_DIR . 'includes/class-wc-wayforpay-gateway-blocks.php';
 }
 
 add_filter( 'woocommerce_payment_gateways', 'wayforpay_gateway_add_gateway' );

@@ -120,7 +120,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 				'desc_tip'    => true,
 			),
 			'showlogo'         => array(
-				'title'       => __( 'Show Logo', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'Show Wayforpay logo for classic checkout', 'woocommerce-wayforpay-payments' ),
 				'type'        => 'checkbox',
 				'label'       => __( 'Show the wayforpay.com logo in the Payment Method section for the user', 'woocommerce-wayforpay-payments' ),
 				'default'     => 'yes',
