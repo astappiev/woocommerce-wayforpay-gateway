@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: WooCommerce WayForPay Gateway
- * Description: WayForPay Payment Gateway for WooCommerce.
+ * Description: Pay securely via the WayForPay Payment Engine.
  * Version: 2.0.0-alpha1
  * Author: Dev team WayForPay, Oleh Astappiev
  * Author: support@wayforpay.com, oleh@astappiev.me

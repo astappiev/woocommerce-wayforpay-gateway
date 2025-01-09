@@ -3,7 +3,7 @@
 	"apiVersion": 3,
 	"name": "wayforpay/gateway",
 	"version": "2.0.0",
-	"title": "WayForPay Gateway",
+	"title": "WooCommerce WayForPay Gateway",
 	"category": "payments",
 	"editorScript": "file:./index.js"
 }
