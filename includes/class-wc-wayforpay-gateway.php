@@ -61,8 +61,8 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		$this->has_fields         = false;
 
 		$this->init_settings();
-		if ( $this->settings['showlogo'] === 'yes' ) {
-			$this->icon = WAYFORPAY_PATH . 'public/images/w4p.png';
+		if ( ! empty( $this->settings['showlogo'] ) ) {
+			$this->icon = WAYFORPAY_PATH . 'public/images/' . $this->settings['showlogo'];
 		}
 
 		if ( defined( self::WAYFORPAY_MERCHANT_TEST ) && constant( self::WAYFORPAY_MERCHANT_TEST ) ) {
@@ -89,7 +89,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			'enabled'          => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-wayforpay-payments' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'Enable WayForPay Payment Module.', 'woocommerce-wayforpay-payments' ),
+				'label'       => __( 'Enable WayForPay Payment Module', 'woocommerce-wayforpay-payments' ),
 				'default'     => 'no',
 				'description' => __( 'Show in the Payment List as a payment option', 'woocommerce-wayforpay-payments' ),
 			),
@@ -120,11 +120,15 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 				'desc_tip'    => true,
 			),
 			'showlogo'         => array(
-				'title'       => __( 'Show Wayforpay logo for classic checkout', 'woocommerce-wayforpay-payments' ),
-				'type'        => 'checkbox',
-				'label'       => __( 'Show the wayforpay.com logo in the Payment Method section for the user', 'woocommerce-wayforpay-payments' ),
-				'default'     => 'yes',
-				'description' => __( 'Tick to show wayforpay.com logo', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'Display Logo', 'woocommerce-wayforpay-payments' ),
+				'type'        => 'select',
+				'options'     => array(
+					''        => __( 'No logo', 'woocommerce-wayforpay-payments' ),
+					'w4p.png' => __( 'WayForPay Logo', 'woocommerce-wayforpay-payments' ),
+					'4pp.png' => __( 'Payment Processors Logos', 'woocommerce-wayforpay-payments' ),
+				),
+				'default'     => '',
+				'description' => __( 'Determines which logo is shown near this payment method on checkout.', 'woocommerce-wayforpay-payments' ),
 				'desc_tip'    => true,
 			),
 			'returnUrl'        => array(
@@ -218,7 +222,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		}
 	}
 
-	public function sign_gateway_form( $data ): void {
+	public function sign_gateway_form( $data ): array {
 		$data['merchantAccount']               = $this->merchant_account;
 		$data['merchantAuthType']              = 'simpleSignature';
 		$data['merchantDomainName']            = $_SERVER['SERVER_NAME'];
@@ -226,6 +230,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 		$data['merchantSignature'] = $this->get_signature( $data, self::SIGNATURE_KEYS );
 		$data['signString']        = $this->get_signature( $data, self::SIGNATURE_KEYS, true );
+		return $data;
 	}
 
 	/**
@@ -312,7 +317,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		);
 		$wayforpay_args = array_merge( $wayforpay_args, $client );
 
-		$this->sign_gateway_form( $wayforpay_args );
+		$wayforpay_args = $this->sign_gateway_form( $wayforpay_args );
 		return $this->render_gateway_form( $wayforpay_args );
 	}
 

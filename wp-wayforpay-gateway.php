@@ -44,12 +44,15 @@ function wayforpay_gateway_declare_cart_checkout_blocks_compatibility(): void {
 	}
 }
 
-add_action( 'woocommerce_blocks_loaded', 'wayforpay_gateway_register_payment_method');
+add_action( 'woocommerce_blocks_loaded', 'wayforpay_gateway_register_payment_method' );
 
 function wayforpay_gateway_register_payment_method(): void {
-	add_action('woocommerce_blocks_payment_method_type_registration', function ( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
-		$payment_method_registry->register( new WC_WayForPay_Gateway_Blocks() );
-	});
+	add_action(
+		'woocommerce_blocks_payment_method_type_registration',
+		function ( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
+			$payment_method_registry->register( new WC_WayForPay_Gateway_Blocks() );
+		}
+	);
 }
 
 add_action( 'plugins_loaded', 'wayforpay_gateway_init', 0 );
