@@ -46,7 +46,7 @@ final class WC_WayForPay_Gateway_Blocks extends AbstractPaymentMethodType {
 		);
 
 		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( 'wc-wayforpay-gateway-blocks', 'woocommerce-wayforpay-payments', WAYFORPAY_DIR . 'languages/' );
+			wp_set_script_translations( 'wc-wayforpay-gateway-blocks', 'wp-wayforpay-gateway', WAYFORPAY_DIR . 'languages/' );
 		}
 
 		return array( 'wc-wayforpay-gateway-blocks' );

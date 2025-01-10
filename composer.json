@@ -25,8 +25,8 @@
   },
   "scripts": {
 		"translate": ["@translate:pot", "@translate:update"],
-		"translate:pot": "wp i18n make-pot . languages/woocommerce-wayforpay-payments.pot --exclude='node_modules,public' --domain=woocommerce-wayforpay-payments",
-		"translate:update": "wp i18n update-po languages/woocommerce-wayforpay-payments.pot",
+		"translate:pot": "wp i18n make-pot . languages/wp-wayforpay-gateway.pot --exclude='node_modules,public' --skip-js --skip-block-json",
+		"translate:update": "wp i18n update-po languages/wp-wayforpay-gateway.pot",
 		"translate:compile": ["@translate:js", "@translate:mo"],
 		"translate:js": "wp i18n make-json languages --no-purge",
 		"translate:mo": "wp i18n make-mo languages",

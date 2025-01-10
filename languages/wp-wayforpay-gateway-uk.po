@@ -1,17 +1,16 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: WooCommerce WayForPay Payments\n"
-"Report-Msgid-Bugs-To: https://github.com/wayforpay/Word-Press-Woocommerce\n"
-"Last-Translator: Wlodz Mur <wm@iwpress.eu>\n"
-"Language-Team: Wayforpay <support@wayforpay.com>\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2022-09-25 11:23+0300\n"
-"PO-Revision-Date: 2022-10-12 21:10+0200\n"
+"POT-Creation-Date: 2025-01-09T23:53:02+00:00\n"
+"PO-Revision-Date: 2025-01-09T23:53:02+00:00\n"
 "Language: uk\n"
 "Plural-Forms: nplurals=3; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : ((n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 1 : 2);\n"
-"X-Generator: Poedit 3.1.1\n"
 
 #: includes/class-wc-wayforpay-gateway.php:60
 msgid "Card payments, Apple Pay and Google Pay."
@@ -23,7 +22,7 @@ msgstr "Увімкнути або вимкнути"
 
 #: includes/class-wc-wayforpay-gateway.php:116
 msgid "Merchant Secret key"
-msgstr "Секретний ключ продавця"
+msgstr "Merchant Secret key"
 
 #: includes/class-wc-wayforpay-gateway.php:134
 msgid "Return URL"
@@ -108,7 +107,7 @@ msgstr "Додатковий коментар про цей метод опла�
 
 #: includes/class-wc-wayforpay-gateway.php:110
 msgid "Merchant Account"
-msgstr "Рахунок продавця"
+msgstr "Merchant Account"
 
 #: includes/class-wc-wayforpay-gateway.php:112
 msgid "Seller identifier. This value is assigned to you by WayForPay."
@@ -173,9 +172,3 @@ msgstr "Сторінка, куди буде потрапляти користу�
 #: includes/class-wc-wayforpay-gateway.php:143
 msgid "The URL of the page where the user will be directed after payment."
 msgstr "Посилання на сторінку, куди буде потрапляти користувач після оплати."
-
-#: block/block.json
-#: public/block/block.json
-msgctxt "block title"
-msgid "WooCommerce WayForPay Gateway"
-msgstr ""

@@ -57,7 +57,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	public function __construct() {
 		$this->id                 = 'wayforpay';
 		$this->method_title       = 'WayForPay';
-		$this->method_description = __( 'Card payments, Apple Pay and Google Pay.', 'woocommerce-wayforpay-payments' );
+		$this->method_description = __( 'Card payments, Apple Pay and Google Pay.', 'wp-wayforpay-gateway' );
 		$this->has_fields         = false;
 
 		$this->init_settings();
@@ -87,66 +87,66 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	function init_form_fields(): void {
 		$this->form_fields        = array(
 			'enabled'          => array(
-				'title'       => __( 'Enable/Disable', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'Enable/Disable', 'wp-wayforpay-gateway' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'Enable WayForPay Payment Engine', 'woocommerce-wayforpay-payments' ),
+				'label'       => __( 'Enable WayForPay Payment Engine', 'wp-wayforpay-gateway' ),
 				'default'     => 'yes',
 			),
 			'title'            => array(
-				'title'       => __( 'Title', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'Title', 'wp-wayforpay-gateway' ),
 				'type'        => 'text',
-				'default'     => __( 'Card or Apple Pay, Google Pay', 'woocommerce-wayforpay-payments' ),
-				'description' => __( 'This controls the title which user sees during checkout.', 'woocommerce-wayforpay-payments' ),
+				'default'     => __( 'Card or Apple Pay, Google Pay', 'wp-wayforpay-gateway' ),
+				'description' => __( 'This controls the title which user sees during checkout.', 'wp-wayforpay-gateway' ),
 				'desc_tip'    => true,
 			),
 			'description'      => array(
-				'title'       => __( 'Description', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'Description', 'wp-wayforpay-gateway' ),
 				'type'        => 'textarea',
-				'default'     => __( 'Pay securely via the WayForPay Payment Engine.', 'woocommerce-wayforpay-payments' ),
-				'description' => __( 'This controls the description which user sees during checkout.', 'woocommerce-wayforpay-payments' ),
+				'default'     => __( 'Pay securely via the WayForPay Payment Engine.', 'wp-wayforpay-gateway' ),
+				'description' => __( 'This controls the description which user sees during checkout.', 'wp-wayforpay-gateway' ),
 				'desc_tip'    => true,
 			),
 			'merchant_account' => array(
-				'title'       => __( 'Merchant Account', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'Merchant Account', 'wp-wayforpay-gateway' ),
 				'type'        => 'text',
-				'description' => __( 'Seller identifier. This value is assigned to you by WayForPay.', 'woocommerce-wayforpay-payments' ),
+				'description' => __( 'Seller identifier. This value is assigned to you by WayForPay.', 'wp-wayforpay-gateway' ),
 				'desc_tip'    => true,
 			),
 			'merchant_secret'  => array(
-				'title'       => __( 'Merchant Secret key', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'Merchant Secret key', 'wp-wayforpay-gateway' ),
 				'type'        => 'text',
-				'description' => __( 'Signature secret key. This value is assigned to you by WayForPay.', 'woocommerce-wayforpay-payments' ),
+				'description' => __( 'Signature secret key. This value is assigned to you by WayForPay.', 'wp-wayforpay-gateway' ),
 				'desc_tip'    => true,
 			),
 			'showlogo'         => array(
-				'title'       => __( 'Display Logo', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'Display Logo', 'wp-wayforpay-gateway' ),
 				'type'        => 'select',
 				'options'     => array(
-					''        => __( 'No logo', 'woocommerce-wayforpay-payments' ),
-					'w4p.png' => __( 'WayForPay Logo', 'woocommerce-wayforpay-payments' ),
-					'4pp.png' => __( 'Payment Processors Logos', 'woocommerce-wayforpay-payments' ),
+					''        => __( 'No logo', 'wp-wayforpay-gateway' ),
+					'w4p.png' => __( 'WayForPay Logo', 'wp-wayforpay-gateway' ),
+					'4pp.png' => __( 'Payment Processors Logos', 'wp-wayforpay-gateway' ),
 				),
 				'default'     => '',
-				'description' => __( 'Determines which logo is shown near this payment method on checkout.', 'woocommerce-wayforpay-payments' ),
+				'description' => __( 'Determines which logo is shown near this payment method on checkout.', 'wp-wayforpay-gateway' ),
 				'desc_tip'    => true,
 			),
 			'returnUrl'        => array(
-				'title'       => __( 'Return URL', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'Return URL', 'wp-wayforpay-gateway' ),
 				'type'        => 'select',
-				'options'     => $this->wayforpay_get_pages( __( 'Select Page', 'woocommerce-wayforpay-payments' ) ),
-				'description' => __( 'The page where the user will be directed after payment.', 'woocommerce-wayforpay-payments' ),
+				'options'     => $this->wayforpay_get_pages( __( 'Select Page', 'wp-wayforpay-gateway' ) ),
+				'description' => __( 'The page where the user will be directed after payment.', 'wp-wayforpay-gateway' ),
 				'desc_tip'    => true,
 			),
 			'returnUrl_m'      => array(
-				'title'       => __( 'or specify', 'woocommerce-wayforpay-payments' ),
+				'title'       => __( 'or specify', 'wp-wayforpay-gateway' ),
 				'type'        => 'text',
-				'description' => __( 'The URL of the page where the user will be directed after payment.', 'woocommerce-wayforpay-payments' ),
+				'description' => __( 'The URL of the page where the user will be directed after payment.', 'wp-wayforpay-gateway' ),
 				'default'     => '',
 				'desc_tip'    => true,
 			),
 		);
 		$constant_merchant        = false;
-		$constant_controlled_hint = __( 'The value is controlled by the %s constant.', 'woocommerce-wayforpay-payments' );
+		$constant_controlled_hint = __( 'The value is controlled by the %s constant.', 'wp-wayforpay-gateway' );
 		if ( defined( self::WAYFORPAY_MERCHANT_TEST ) && constant( self::WAYFORPAY_MERCHANT_TEST ) ) {
 			$this->form_fields['merchant_account']['description'] = sprintf( $constant_controlled_hint, self::WAYFORPAY_MERCHANT_TEST );
 			$this->form_fields['merchant_secret']['description']  = sprintf( $constant_controlled_hint, self::WAYFORPAY_MERCHANT_TEST );
@@ -170,8 +170,8 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	 * - Options for bits like 'title' and availability on a country-by-country basis
 	 */
 	public function admin_options(): void {
-		echo '<h3>' . __( 'WayForPay.com', 'woocommerce-wayforpay-payments' ) . '</h3>';
-		echo '<p>' . __( 'Payment gateway', 'woocommerce-wayforpay-payments' ) . '</p>';
+		echo '<h3>' . __( 'WayForPay.com', 'wp-wayforpay-gateway' ) . '</h3>';
+		echo '<p>' . __( 'Payment gateway', 'wp-wayforpay-gateway' ) . '</p>';
 		echo '<table class="form-table">';
 		// Generate the HTML For the settings form.
 		$this->generate_settings_html();
@@ -193,7 +193,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	function receipt_page( $order ): void {
 		global $woocommerce;
 
-		echo '<p>' . __( 'Thank you for your order, you will now be redirected to the WayForPay payment page.', 'woocommerce-wayforpay-payments' ) . '</p>';
+		echo '<p>' . __( 'Thank you for your order, you will now be redirected to the WayForPay payment page.', 'wp-wayforpay-gateway' ) . '</p>';
 		echo $this->generate_wayforpay_form( $order );
 
 		$woocommerce->cart->empty_cart();
@@ -360,24 +360,24 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		list($orderId,) = explode( self::WAYFORPAY_REFERENCE_SUFFIX, $response['orderReference'] );
 		$order          = wc_get_order( $orderId );
 		if ( $order === false ) {
-			throw new Exception( __( 'An error has occurred during payment. Please contact us to ensure your order has submitted.', 'woocommerce-wayforpay-payments' ) );
+			throw new Exception( __( 'An error has occurred during payment. Please contact us to ensure your order has submitted.', 'wp-wayforpay-gateway' ) );
 		}
 
 		if ( $this->merchant_account !== $response['merchantAccount'] ) {
-			throw new Exception( __( 'An error has occurred during payment. Merchant data is incorrect.', 'woocommerce-wayforpay-payments' ) );
+			throw new Exception( __( 'An error has occurred during payment. Merchant data is incorrect.', 'wp-wayforpay-gateway' ) );
 		}
 
 		$responseSignature = $response['merchantSignature'];
 
 		if ( $this->get_signature( $response, self::SIGNATURE_KEYS_RESPONSE ) !== $responseSignature ) {
-			die( __( 'An error has occurred during payment. Signature is not valid.', 'woocommerce-wayforpay-payments' ) );
+			die( __( 'An error has occurred during payment. Signature is not valid.', 'wp-wayforpay-gateway' ) );
 		}
 
-		$order_note = sprintf( __( 'Transaction updated, current status: %s', 'woocommerce-wayforpay-payments' ), $response['transactionStatus'] );
+		$order_note = sprintf( __( 'Transaction updated, current status: %s', 'wp-wayforpay-gateway' ), $response['transactionStatus'] );
 		switch ( $response['transactionStatus'] ) {
 			case self::ORDER_APPROVED:
 				$order->payment_complete();
-				$order_note = sprintf( __( 'Payment successful: %1$s %2$s.', 'woocommerce-wayforpay-payments' ), $response['amount'], $response['currency'] );
+				$order_note = sprintf( __( 'Payment successful: %1$s %2$s.', 'wp-wayforpay-gateway' ), $response['amount'], $response['currency'] );
 
 				global $woocommerce;
 				if ( $woocommerce->cart && ! $woocommerce->cart->is_empty() ) {
@@ -387,19 +387,19 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			case self::ORDER_REFUNDED:
 			case self::ORDER_VOIDED:
 				$order->update_status( 'refunded' );
-				$order_note = sprintf( __( 'Refunded %1$s %2$s.', 'woocommerce-wayforpay-payments' ), $response['amount'], $response['currency'] );
+				$order_note = sprintf( __( 'Refunded %1$s %2$s.', 'wp-wayforpay-gateway' ), $response['amount'], $response['currency'] );
 				break;
 			case self::ORDER_EXPIRED:
 				$order->update_status( 'failed' );
-				$order_note = __( 'Payment expired.', 'woocommerce-wayforpay-payments' );
+				$order_note = __( 'Payment expired.', 'wp-wayforpay-gateway' );
 				break;
 			case self::ORDER_DECLINED:
 				$order->update_status( 'failed' );
-				$order_note = sprintf( __( 'Payment failed: %1$s - %2$s.', 'woocommerce-wayforpay-payments' ), $response['reasonCode'] ?? 'N/A', $response['reason'] ?? 'N/A' );
+				$order_note = sprintf( __( 'Payment failed: %1$s - %2$s.', 'wp-wayforpay-gateway' ), $response['reasonCode'] ?? 'N/A', $response['reason'] ?? 'N/A' );
 				break;
 		}
 
-		$order_note .= '<br/>' . sprintf( __( 'WayForPay ID: %s', 'woocommerce-wayforpay-payments' ), $response['orderReference'] );
+		$order_note .= '<br/>' . sprintf( __( 'WayForPay ID: %s', 'wp-wayforpay-gateway' ), $response['orderReference'] );
 		$order->add_order_note( $order_note );
 	}
 

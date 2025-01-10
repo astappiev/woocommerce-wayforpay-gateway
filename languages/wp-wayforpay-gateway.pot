@@ -9,10 +9,10 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-01-09T23:41:59+00:00\n"
+"POT-Creation-Date: 2025-01-09T23:52:03+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
-"X-Domain: woocommerce-wayforpay-payments\n"
+"X-Domain: wp-wayforpay-gateway\n"
 
 #. Plugin Name of the plugin
 #: wp-wayforpay-gateway.php
@@ -173,10 +173,4 @@ msgstr ""
 
 #: includes/class-wc-wayforpay-gateway.php:402
 msgid "WayForPay ID: %s"
-msgstr ""
-
-#: block/block.json
-#: public/block/block.json
-msgctxt "block title"
-msgid "WooCommerce WayForPay Gateway"
 msgstr ""

@@ -25,7 +25,7 @@ define( 'WAYFORPAY_PATH', plugin_dir_url( __FILE__ ) );
 add_action( 'init', 'wayforpay_gateway_i18n' );
 
 function wayforpay_gateway_i18n(): void {
-	load_plugin_textdomain( 'woocommerce-wayforpay-payments', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+	load_plugin_textdomain( 'wp-wayforpay-gateway', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 }
 
 add_action( 'before_woocommerce_init', 'wayforpay_gateway_declare_hpos_compatibility' );
