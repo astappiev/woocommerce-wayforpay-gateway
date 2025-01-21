@@ -61,7 +61,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		$this->has_fields         = false;
 
 		$this->init_settings();
-		if ( ! empty( $this->settings['showlogo'] ) ) {
+		if ( ! empty( $this->settings['showlogo'] ) && $this->settings['showlogo'] !== 'no' ) {
 			$this->icon = WAYFORPAY_PATH . 'public/images/' . $this->settings['showlogo'];
 		}
 
