@@ -381,6 +381,10 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			throw new Exception( __( 'An error has occurred during payment. Merchant data is incorrect.', 'wp-wayforpay-gateway' ) );
 		}
 
+		if ( $this->merchant_account === self::TEST_MERCHANT_ACCOUNT ) {
+			$order->add_order_note( __( 'A test merchant was used for this transaction (no money received)!', 'wp-wayforpay-gateway' ) );
+		}
+
 		$responseSignature = $response['merchantSignature'];
 
 		if ( $this->get_signature( $response, self::SIGNATURE_KEYS_RESPONSE ) !== $responseSignature ) {
