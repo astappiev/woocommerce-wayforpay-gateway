@@ -53,6 +53,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 	protected $merchant_account;
 	protected $merchant_secret;
+	protected $merchant_test = false;
 
 	public function __construct() {
 		$this->id                 = 'wayforpay';
@@ -68,6 +69,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		if ( defined( self::WAYFORPAY_MERCHANT_TEST ) && constant( self::WAYFORPAY_MERCHANT_TEST ) ) {
 			$this->settings['merchant_account'] = self::TEST_MERCHANT_ACCOUNT;
 			$this->settings['merchant_secret']  = self::TEST_MERCHANT_SECRET;
+			$this->merchant_test                = true;
 		} elseif ( defined( self::WAYFORPAY_MERCHANT_ACCOUNT ) && defined( self::WAYFORPAY_MERCHANT_SECRET ) ) {
 			$this->settings['merchant_account'] = constant( self::WAYFORPAY_MERCHANT_ACCOUNT );
 			$this->settings['merchant_secret']  = constant( self::WAYFORPAY_MERCHANT_SECRET );
@@ -79,6 +81,12 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		$this->merchant_account = $this->settings['merchant_account'];
 		$this->merchant_secret  = $this->settings['merchant_secret'];
 
+		if ( isset( $this->settings['test_for_admins'] ) && $this->settings['test_for_admins'] === 'yes' && current_user_can( 'administrator' ) ) {
+			$this->merchant_account = self::TEST_MERCHANT_ACCOUNT;
+			$this->merchant_secret  = self::TEST_MERCHANT_SECRET;
+			$this->merchant_test    = true;
+		}
+
 		add_action( 'woocommerce_api_' . $this->id . '_callback', array( $this, 'receive_service_callback' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 		add_action( 'woocommerce_receipt_' . $this->id, array( &$this, 'receipt_page' ) );
@@ -87,10 +95,10 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	function init_form_fields(): void {
 		$this->form_fields        = array(
 			'enabled'          => array(
-				'title'       => __( 'Enable/Disable', 'wp-wayforpay-gateway' ),
-				'type'        => 'checkbox',
-				'label'       => __( 'Enable WayForPay Payment Engine', 'wp-wayforpay-gateway' ),
-				'default'     => 'yes',
+				'title'   => __( 'Enable/Disable', 'wp-wayforpay-gateway' ),
+				'type'    => 'checkbox',
+				'label'   => __( 'Enable WayForPay Payment Engine', 'wp-wayforpay-gateway' ),
+				'default' => 'yes',
 			),
 			'title'            => array(
 				'title'       => __( 'Title', 'wp-wayforpay-gateway' ),
@@ -117,6 +125,12 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 				'type'        => 'text',
 				'description' => __( 'Signature secret key. This value is assigned to you by WayForPay.', 'wp-wayforpay-gateway' ),
 				'desc_tip'    => true,
+			),
+			'test_for_admins'  => array(
+				'title'   => __( 'Enable test merchant for Administrators', 'wp-wayforpay-gateway' ),
+				'type'    => 'checkbox',
+				'label'   => __( 'When enabled, the test merchant will be used for admins. You on your own risk.', 'wp-wayforpay-gateway' ),
+				'default' => 'no',
 			),
 			'showlogo'         => array(
 				'title'       => __( 'Display Logo', 'wp-wayforpay-gateway' ),
