@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-01-09T23:52:03+00:00\n"
+"POT-Creation-Date: 2025-02-26T11:18:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: wp-wayforpay-gateway\n"
@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: wp-wayforpay-gateway.php
-#: includes/class-wc-wayforpay-gateway.php:105
+#: includes/class-wc-wayforpay-gateway.php:117
 msgid "Pay securely via the WayForPay Payment Engine."
 msgstr ""
 
@@ -35,142 +35,158 @@ msgstr ""
 msgid "Dev team WayForPay, Oleh Astappiev"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:60
-msgid "Card payments, Apple Pay and Google Pay."
+#: includes/class-wc-wayforpay-gateway.php:61
+msgid "Accept card payments, Apple Pay and Google Pay via WayForPay payment gateway."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:90
+#: includes/class-wc-wayforpay-gateway.php:102
 msgid "Enable/Disable"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:92
+#: includes/class-wc-wayforpay-gateway.php:104
 msgid "Enable WayForPay Payment Engine"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:96
+#: includes/class-wc-wayforpay-gateway.php:108
 msgid "Title"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:98
-msgid "Card or Apple Pay, Google Pay"
+#: includes/class-wc-wayforpay-gateway.php:110
+msgid "Pay with card, Apple Pay, Google Pay"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:99
+#: includes/class-wc-wayforpay-gateway.php:111
 msgid "This controls the title which user sees during checkout."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:103
+#: includes/class-wc-wayforpay-gateway.php:115
 msgid "Description"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:106
+#: includes/class-wc-wayforpay-gateway.php:118
 msgid "This controls the description which user sees during checkout."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:110
+#: includes/class-wc-wayforpay-gateway.php:122
 msgid "Merchant Account"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:112
+#: includes/class-wc-wayforpay-gateway.php:124
 msgid "Seller identifier. This value is assigned to you by WayForPay."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:116
+#: includes/class-wc-wayforpay-gateway.php:128
 msgid "Merchant Secret key"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:118
+#: includes/class-wc-wayforpay-gateway.php:130
 msgid "Signature secret key. This value is assigned to you by WayForPay."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:122
-msgid "Display Logo"
-msgstr ""
-
-#: includes/class-wc-wayforpay-gateway.php:125
-msgid "No logo"
-msgstr ""
-
-#: includes/class-wc-wayforpay-gateway.php:126
-msgid "WayForPay Logo"
-msgstr ""
-
-#: includes/class-wc-wayforpay-gateway.php:127
-msgid "Payment Processors Logos"
-msgstr ""
-
-#: includes/class-wc-wayforpay-gateway.php:130
-msgid "Determines which logo is shown near this payment method on checkout."
-msgstr ""
-
 #: includes/class-wc-wayforpay-gateway.php:134
-msgid "Return URL"
+msgid "Enable test merchant for Administrators"
 msgstr ""
 
 #: includes/class-wc-wayforpay-gateway.php:136
-msgid "Select Page"
+msgid "When enabled, the test merchant will be used for admins. You on your own risk."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:137
-msgid "The page where the user will be directed after payment."
-msgstr ""
-
-#: includes/class-wc-wayforpay-gateway.php:141
-msgid "or specify"
+#: includes/class-wc-wayforpay-gateway.php:140
+msgid "Display Logo"
 msgstr ""
 
 #: includes/class-wc-wayforpay-gateway.php:143
+msgid "No logo"
+msgstr ""
+
+#: includes/class-wc-wayforpay-gateway.php:144
+msgid "WayForPay Logo"
+msgstr ""
+
+#: includes/class-wc-wayforpay-gateway.php:145
+msgid "Payment Processors Logos"
+msgstr ""
+
+#: includes/class-wc-wayforpay-gateway.php:148
+msgid "Determines which logo is shown near this payment method on checkout."
+msgstr ""
+
+#: includes/class-wc-wayforpay-gateway.php:152
+msgid "Return URL"
+msgstr ""
+
+#: includes/class-wc-wayforpay-gateway.php:154
+msgid "Select Page"
+msgstr ""
+
+#: includes/class-wc-wayforpay-gateway.php:155
+msgid "The page where the user will be directed after payment."
+msgstr ""
+
+#: includes/class-wc-wayforpay-gateway.php:159
+msgid "or specify"
+msgstr ""
+
+#: includes/class-wc-wayforpay-gateway.php:161
 msgid "The URL of the page where the user will be directed after payment."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:149
+#: includes/class-wc-wayforpay-gateway.php:167
 msgid "The value is controlled by the %s constant."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:173
+#: includes/class-wc-wayforpay-gateway.php:191
 msgid "WayForPay.com"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:174
+#: includes/class-wc-wayforpay-gateway.php:192
 msgid "Payment gateway"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:196
+#: includes/class-wc-wayforpay-gateway.php:214
 msgid "Thank you for your order, you will now be redirected to the WayForPay payment page."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:363
+#: includes/class-wc-wayforpay-gateway.php:379
 msgid "An error has occurred during payment. Please contact us to ensure your order has submitted."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:367
+#: includes/class-wc-wayforpay-gateway.php:383
+msgid "A test merchant was used for this transaction (no money received)!"
+msgstr ""
+
+#: includes/class-wc-wayforpay-gateway.php:392
 msgid "An error has occurred during payment. Merchant data is incorrect."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:373
+#: includes/class-wc-wayforpay-gateway.php:396
 msgid "An error has occurred during payment. Signature is not valid."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:376
+#: includes/class-wc-wayforpay-gateway.php:399
 msgid "Transaction updated, current status: %s"
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:380
+#: includes/class-wc-wayforpay-gateway.php:403
 msgid "Payment successful: %1$s %2$s."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:390
+#: includes/class-wc-wayforpay-gateway.php:413
 msgid "Refunded %1$s %2$s."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:394
+#: includes/class-wc-wayforpay-gateway.php:417
 msgid "Payment expired."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:398
+#: includes/class-wc-wayforpay-gateway.php:421
 msgid "Payment failed: %1$s - %2$s."
 msgstr ""
 
-#: includes/class-wc-wayforpay-gateway.php:402
+#: includes/class-wc-wayforpay-gateway.php:425
 msgid "WayForPay ID: %s"
+msgstr ""
+
+#: includes/class-wc-wayforpay-gateway.php:457
+msgid "An error has occurred during redirect, if it persists, please contact us."
 msgstr ""

@@ -91,50 +91,9 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		}
 
 		add_action( 'woocommerce_api_' . $this->id . '_callback', array( $this, 'receive_service_callback' ) );
+		add_action( 'woocommerce_api_' . $this->id . '_return', array( $this, 'receive_return_callback' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 		add_action( 'woocommerce_receipt_' . $this->id, array( &$this, 'receipt_page' ) );
-
-		add_action( 'template_redirect', array( $this, 'template_redirect_verify_payment_status' ) );
-		add_action( 'woocommerce_before_thankyou', array( $this, 'post_payment_request' ) );
-		add_filter( 'woocommerce_thankyou_order_received_title', array( $this, 'order_received_title' ), 10, 2 );
-		add_filter( 'woocommerce_thankyou_order_received_text', array( $this, 'order_received_text' ), 20, 2 );
-	}
-
-	function order_received_title( $title, $order ): string {
-		return $title;
-	}
-
-	function order_received_text( $text, $order ): string {
-		return $text;
-	}
-
-	/**
-	 * In this hook, we check the order status before displaying the order-received page.
-	 */
-	function template_redirect_verify_payment_status(): void {
-		if ( is_wc_endpoint_url( 'order-received' ) && ! empty( $_POST ) ) {
-			try {
-				$this->handle_service_callback( $_POST );
-			} catch ( Exception $e ) {
-				// do that silently
-			}
-		}
-	}
-
-	/**
-	 * Some users will not get to this point, due to browser cookie settings (the redirect is sent from 3rd party domain)
-	 */
-	function post_payment_request( $order_id ): void {
-		if ( ! $order = wc_get_order( $order_id ) ) {
-			return;
-		}
-
-		$order_status = $order->get_status();
-		if ( $order_status === ORDER_STATUS_FAILED ) {
-			wc_add_notice( __( 'Payment failed', 'wp-wayforpay-gateway' ), 'error' );
-			wp_redirect( wc_get_checkout_url() );
-			exit();
-		}
 	}
 
 	function init_form_fields(): void {
@@ -337,8 +296,8 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			'orderDate'      => strtotime( $order->get_date_created() ),
 			'currency'       => $currency,
 			'amount'         => $order->get_total(),
-			'returnUrl'      => $this->get_callback_url( $order ),
-			'serviceUrl'     => wc_get_endpoint_url( 'wc-api', $this->id . '_callback', get_site_url() ),
+			'returnUrl'      => wc_get_endpoint_url( 'wc-api', $this->id . '_return', get_home_url() ),
+			'serviceUrl'     => wc_get_endpoint_url( 'wc-api', $this->id . '_callback', get_home_url() ),
 			'language'       => $this->get_gateway_language(),
 		);
 
@@ -413,7 +372,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @throws Exception
 	 */
-	protected function handle_service_callback( $response ): void {
+	protected function handle_service_callback( $response ): WC_Order {
 		list($orderId,) = explode( self::WAYFORPAY_REFERENCE_SUFFIX, $response['orderReference'] );
 		$order          = wc_get_order( $orderId );
 		if ( $order === false ) {
@@ -434,7 +393,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		}
 
 		if ( $this->get_signature( $response, self::SIGNATURE_KEYS_RESPONSE ) !== $response['merchantSignature'] ) {
-			die( __( 'An error has occurred during payment. Signature is not valid.', 'wp-wayforpay-gateway' ) );
+			throw new Exception( __( 'An error has occurred during payment. Signature is not valid.', 'wp-wayforpay-gateway' ) );
 		}
 
 		$order_note = sprintf( __( 'Transaction updated, current status: %s', 'wp-wayforpay-gateway' ), $response['transactionStatus'] );
@@ -465,6 +424,8 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 		$order_note .= '<br/>' . sprintf( __( 'WayForPay ID: %s', 'wp-wayforpay-gateway' ), $response['orderReference'] );
 		$order->add_order_note( $order_note );
+
+		return $order;
 	}
 
 	/**
@@ -486,6 +447,23 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 		$responseToGateway['signature'] = $sign;
 		return json_encode( $responseToGateway );
+	}
+
+	/**
+	 * This will be called when the service callback is received.
+	 */
+	function receive_return_callback(): void {
+		if ( empty( $_POST ) ) {
+			die( __( 'An error has occurred during redirect, if it persists, please contact us.', 'wp-wayforpay-gateway' ) );
+		}
+
+		try {
+			$order = $this->handle_service_callback( $_POST );
+			wp_redirect( $this->get_callback_url( $order ) );
+		} catch ( Exception $e ) {
+			echo $e->getMessage();
+		}
+		exit;
 	}
 
 	/**
