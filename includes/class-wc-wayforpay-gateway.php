@@ -53,13 +53,14 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 	protected $merchant_account;
 	protected $merchant_secret;
-	protected $merchant_test = false;
+	protected $merchant_test_allowed = false;
 
 	public function __construct() {
 		$this->id                 = 'wayforpay';
 		$this->method_title       = 'WayForPay';
-		$this->method_description = __( 'Card payments, Apple Pay and Google Pay.', 'wp-wayforpay-gateway' );
+		$this->method_description = __( 'Accept card payments, Apple Pay and Google Pay via WayForPay payment gateway.', 'wp-wayforpay-gateway' );
 		$this->has_fields         = false;
+		$this->supports           = array( 'products' ); // TODO: implement refunds
 
 		$this->init_settings();
 		if ( ! empty( $this->settings['showlogo'] ) && $this->settings['showlogo'] !== 'no' ) {
@@ -69,7 +70,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		if ( defined( self::WAYFORPAY_MERCHANT_TEST ) && constant( self::WAYFORPAY_MERCHANT_TEST ) ) {
 			$this->settings['merchant_account'] = self::TEST_MERCHANT_ACCOUNT;
 			$this->settings['merchant_secret']  = self::TEST_MERCHANT_SECRET;
-			$this->merchant_test                = true;
+			$this->merchant_test_allowed        = true;
 		} elseif ( defined( self::WAYFORPAY_MERCHANT_ACCOUNT ) && defined( self::WAYFORPAY_MERCHANT_SECRET ) ) {
 			$this->settings['merchant_account'] = constant( self::WAYFORPAY_MERCHANT_ACCOUNT );
 			$this->settings['merchant_secret']  = constant( self::WAYFORPAY_MERCHANT_SECRET );
@@ -81,15 +82,59 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		$this->merchant_account = $this->settings['merchant_account'];
 		$this->merchant_secret  = $this->settings['merchant_secret'];
 
-		if ( isset( $this->settings['test_for_admins'] ) && $this->settings['test_for_admins'] === 'yes' && current_user_can( 'administrator' ) ) {
-			$this->merchant_account = self::TEST_MERCHANT_ACCOUNT;
-			$this->merchant_secret  = self::TEST_MERCHANT_SECRET;
-			$this->merchant_test    = true;
+		if ( isset( $this->settings['test_for_admins'] ) && $this->settings['test_for_admins'] === 'yes' ) {
+			$this->merchant_test_allowed = true;
+			if ( current_user_can( 'administrator' ) ) {
+				$this->merchant_account = self::TEST_MERCHANT_ACCOUNT;
+				$this->merchant_secret  = self::TEST_MERCHANT_SECRET;
+			}
 		}
 
 		add_action( 'woocommerce_api_' . $this->id . '_callback', array( $this, 'receive_service_callback' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 		add_action( 'woocommerce_receipt_' . $this->id, array( &$this, 'receipt_page' ) );
+
+		add_action( 'template_redirect', array( $this, 'template_redirect_verify_payment_status' ) );
+		add_action( 'woocommerce_before_thankyou', array( $this, 'post_payment_request' ) );
+		add_filter( 'woocommerce_thankyou_order_received_title', array( $this, 'order_received_title' ), 10, 2 );
+		add_filter( 'woocommerce_thankyou_order_received_text', array( $this, 'order_received_text' ), 20, 2 );
+	}
+
+	function order_received_title( $title, $order ): string {
+		return $title;
+	}
+
+	function order_received_text( $text, $order ): string {
+		return $text;
+	}
+
+	/**
+	 * In this hook, we check the order status before displaying the order-received page.
+	 */
+	function template_redirect_verify_payment_status(): void {
+		if ( is_wc_endpoint_url( 'order-received' ) && ! empty( $_POST ) ) {
+			try {
+				$this->handle_service_callback( $_POST );
+			} catch ( Exception $e ) {
+				// do that silently
+			}
+		}
+	}
+
+	/**
+	 * Some users will not get to this point, due to browser cookie settings (the redirect is sent from 3rd party domain)
+	 */
+	function post_payment_request( $order_id ): void {
+		if ( ! $order = wc_get_order( $order_id ) ) {
+			return;
+		}
+
+		$order_status = $order->get_status();
+		if ( $order_status === ORDER_STATUS_FAILED ) {
+			wc_add_notice( __( 'Payment failed', 'wp-wayforpay-gateway' ), 'error' );
+			wp_redirect( wc_get_checkout_url() );
+			exit();
+		}
 	}
 
 	function init_form_fields(): void {
@@ -103,7 +148,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			'title'            => array(
 				'title'       => __( 'Title', 'wp-wayforpay-gateway' ),
 				'type'        => 'text',
-				'default'     => __( 'Card or Apple Pay, Google Pay', 'wp-wayforpay-gateway' ),
+				'default'     => __( 'Pay with card, Apple Pay, Google Pay', 'wp-wayforpay-gateway' ),
 				'description' => __( 'This controls the title which user sees during checkout.', 'wp-wayforpay-gateway' ),
 				'desc_tip'    => true,
 			),
@@ -209,8 +254,6 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 		echo '<p>' . __( 'Thank you for your order, you will now be redirected to the WayForPay payment page.', 'wp-wayforpay-gateway' ) . '</p>';
 		echo $this->generate_wayforpay_form( $order );
-
-		$woocommerce->cart->empty_cart();
 	}
 
 	public function get_signature( $option, $keys, bool $hashOnly = false ): string {
@@ -343,7 +386,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 		return array(
 			'result'   => 'success',
-			'redirect' => $checkout_payment_url,
+			'redirect' => $checkout_payment_url, // TODO: investigate if WayForPay API can be used directly
 		);
 	}
 
@@ -377,17 +420,20 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			throw new Exception( __( 'An error has occurred during payment. Please contact us to ensure your order has submitted.', 'wp-wayforpay-gateway' ) );
 		}
 
+		if ( $response['merchantAccount'] === self::TEST_MERCHANT_ACCOUNT && $this->merchant_test_allowed ) {
+			$order->add_order_note( __( 'A test merchant was used for this transaction (no money received)!', 'wp-wayforpay-gateway' ) );
+
+			if ( $this->merchant_account !== self::TEST_MERCHANT_ACCOUNT && user_can( $order->get_user(), 'administrator' ) ) {
+				$this->merchant_account = self::TEST_MERCHANT_ACCOUNT;
+				$this->merchant_secret  = self::TEST_MERCHANT_SECRET;
+			}
+		}
+
 		if ( $this->merchant_account !== $response['merchantAccount'] ) {
 			throw new Exception( __( 'An error has occurred during payment. Merchant data is incorrect.', 'wp-wayforpay-gateway' ) );
 		}
 
-		if ( $this->merchant_account === self::TEST_MERCHANT_ACCOUNT ) {
-			$order->add_order_note( __( 'A test merchant was used for this transaction (no money received)!', 'wp-wayforpay-gateway' ) );
-		}
-
-		$responseSignature = $response['merchantSignature'];
-
-		if ( $this->get_signature( $response, self::SIGNATURE_KEYS_RESPONSE ) !== $responseSignature ) {
+		if ( $this->get_signature( $response, self::SIGNATURE_KEYS_RESPONSE ) !== $response['merchantSignature'] ) {
 			die( __( 'An error has occurred during payment. Signature is not valid.', 'wp-wayforpay-gateway' ) );
 		}
 

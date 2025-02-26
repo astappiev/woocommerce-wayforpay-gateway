@@ -30,8 +30,8 @@
 		"translate:compile": ["@translate:js", "@translate:mo"],
 		"translate:js": "wp i18n make-json languages --no-purge",
 		"translate:mo": "wp i18n make-mo languages",
-    "lint": "vendor/bin/phpcs --standard=WordPress --extensions=php --ignore=vendor --ignore=public -ps .",
-    "fix": "vendor/bin/phpcbf --standard=WordPress --extensions=php --ignore=vendor --ignore=public -ps ."
+    "lint": "vendor/bin/phpcs --standard=WordPress --extensions=php --ignore=vendor,public -ps .",
+    "fix": "vendor/bin/phpcbf --standard=WordPress --extensions=php --ignore=vendor,public -ps ."
   },
   "config": {
     "allow-plugins": {
