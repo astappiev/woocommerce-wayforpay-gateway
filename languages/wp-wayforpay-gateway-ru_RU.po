@@ -12,49 +12,17 @@ msgstr ""
 "Language: ru_RU\n"
 "Plural-Forms: nplurals=3; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : ((n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 1 : 2);\n"
 
-#: includes/class-wc-wayforpay-gateway.php:102
+#: includes/class-wc-wayforpay-gateway.php:52
 msgid "Enable/Disable"
 msgstr "Включить или выключить"
 
-#: includes/class-wc-wayforpay-gateway.php:128
+#: includes/class-wc-wayforpay-gateway.php:78
 msgid "Merchant Secret key"
 msgstr "Merchant Secret key"
 
-#: includes/class-wc-wayforpay-gateway.php:152
-msgid "Return URL"
-msgstr "Страница возврата"
-
-#: includes/class-wc-wayforpay-gateway.php:154
+#: includes/class-wc-wayforpay-gateway.php:98
 msgid "Select Page"
 msgstr "Выберите страницу"
-
-#: includes/class-wc-wayforpay-gateway.php:159
-msgid "or specify"
-msgstr "или укажите"
-
-#: includes/class-wc-wayforpay-gateway.php:191
-msgid "WayForPay.com"
-msgstr "WayForPay.com"
-
-#: includes/class-wc-wayforpay-gateway.php:192
-msgid "Payment gateway"
-msgstr "Платежный шлюз"
-
-#: includes/class-wc-wayforpay-gateway.php:214
-msgid "Thank you for your order, you will now be redirected to the WayForPay payment page."
-msgstr "Спасибо за ваш заказ, сейчас вы будете перенаправлены на страницу оплаты WayForPay."
-
-#: includes/class-wc-wayforpay-gateway.php:379
-msgid "An error has occurred during payment. Please contact us to ensure your order has submitted."
-msgstr "Во время оплаты произошла ошибка. Свяжитесь с нами, чтобы убедиться, что ваш заказ отправлен."
-
-#: includes/class-wc-wayforpay-gateway.php:392
-msgid "An error has occurred during payment. Merchant data is incorrect."
-msgstr "Во время оплаты произошла ошибка. Данные продавца неправильные."
-
-#: includes/class-wc-wayforpay-gateway.php:396
-msgid "An error has occurred during payment. Signature is not valid."
-msgstr "Во время оплаты произошла ошибка. Подпись недействительна."
 
 #. Plugin Name of the plugin
 #: wp-wayforpay-gateway.php
@@ -71,120 +39,138 @@ msgstr "https://github.com/astappiev/wp-wayforpay-gateway"
 msgid "Dev team WayForPay, Oleh Astappiev"
 msgstr "Команда разработчиков WayForPay, Oleh Astappiev"
 
-#: includes/class-wc-wayforpay-gateway.php:104
+#: includes/class-wc-wayforpay-gateway.php:54
 msgid "Enable WayForPay Payment Engine"
 msgstr "Включить платежную систему WayForPay"
 
-#: includes/class-wc-wayforpay-gateway.php:108
+#: includes/class-wc-wayforpay-gateway.php:58
 msgid "Title"
 msgstr "Название платежного метода"
 
-#: includes/class-wc-wayforpay-gateway.php:111
+#: includes/class-wc-wayforpay-gateway.php:61
 msgid "This controls the title which user sees during checkout."
 msgstr "Название платежного метода, которое может прочитать пользователь во время оплаты."
 
-#: includes/class-wc-wayforpay-gateway.php:115
+#: includes/class-wc-wayforpay-gateway.php:65
 msgid "Description"
 msgstr "Описание платежного метода"
 
 #. Description of the plugin
 #: wp-wayforpay-gateway.php
-#: includes/class-wc-wayforpay-gateway.php:117
+#: includes/class-wc-wayforpay-gateway.php:67
 msgid "Pay securely via the WayForPay Payment Engine."
 msgstr "Оплачивайте безопасно через платежную систему WayForPay."
 
-#: includes/class-wc-wayforpay-gateway.php:118
+#: includes/class-wc-wayforpay-gateway.php:68
 msgid "This controls the description which user sees during checkout."
 msgstr "Дополнительный комментарий об этом методе оплаты, который может прочитать пользователь во время оплаты."
 
-#: includes/class-wc-wayforpay-gateway.php:122
+#: includes/class-wc-wayforpay-gateway.php:72
 msgid "Merchant Account"
 msgstr "Merchant Account"
 
-#: includes/class-wc-wayforpay-gateway.php:124
+#: includes/class-wc-wayforpay-gateway.php:74
 msgid "Seller identifier. This value is assigned to you by WayForPay."
 msgstr "Идентификатор продавца. Это значение присваивается вам системой WayForPay."
 
-#: includes/class-wc-wayforpay-gateway.php:130
+#: includes/class-wc-wayforpay-gateway.php:80
 msgid "Signature secret key. This value is assigned to you by WayForPay."
 msgstr "Секретный ключ продавца. Это значение присваивается вам системой WayForPay."
 
-#: includes/class-wc-wayforpay-gateway.php:140
+#: includes/class-wc-wayforpay-gateway.php:84
 msgid "Display Logo"
 msgstr "Отображение логотипа"
 
-#: includes/class-wc-wayforpay-gateway.php:143
+#: includes/class-wc-wayforpay-gateway.php:87
 msgid "No logo"
 msgstr "Без логотипа"
 
-#: includes/class-wc-wayforpay-gateway.php:144
+#: includes/class-wc-wayforpay-gateway.php:88
 msgid "WayForPay Logo"
 msgstr "Логотип WayForPay"
 
-#: includes/class-wc-wayforpay-gateway.php:145
+#: includes/class-wc-wayforpay-gateway.php:89
 msgid "Payment Processors Logos"
 msgstr "Логотипы платежных систем"
 
-#: includes/class-wc-wayforpay-gateway.php:148
+#: includes/class-wc-wayforpay-gateway.php:92
 msgid "Determines which logo is shown near this payment method on checkout."
 msgstr "Определяет, какой логотип отображается возле этого способа оплаты на кассе."
 
-#: includes/class-wc-wayforpay-gateway.php:167
+#: includes/class-wc-wayforpay-gateway.php:112
 msgid "The value is controlled by the %s constant."
 msgstr "Значение контролируется константой %s."
 
-#: includes/class-wc-wayforpay-gateway.php:399
+#: includes/class-wc-wayforpay-gateway.php:286
 msgid "Transaction updated, current status: %s"
 msgstr "Транзакция обновлена, текущий статус: %s"
 
-#: includes/class-wc-wayforpay-gateway.php:403
+#: includes/class-wc-wayforpay-gateway.php:265
 msgid "Payment successful: %1$s %2$s."
 msgstr "Платеж выполнен: %1$s %2$s."
 
-#: includes/class-wc-wayforpay-gateway.php:413
+#: includes/class-wc-wayforpay-gateway.php:228
+#: includes/class-wc-wayforpay-gateway.php:272
 msgid "Refunded %1$s %2$s."
 msgstr "Возвращено %1$s из %2$s."
 
-#: includes/class-wc-wayforpay-gateway.php:417
+#: includes/class-wc-wayforpay-gateway.php:283
 msgid "Payment expired."
 msgstr "Срок оплаты истек."
 
-#: includes/class-wc-wayforpay-gateway.php:421
+#: includes/class-wc-wayforpay-gateway.php:278
 msgid "Payment failed: %1$s - %2$s."
 msgstr "Платеж не прошел: %1$s - %2$s."
 
-#: includes/class-wc-wayforpay-gateway.php:425
-msgid "WayForPay ID: %s"
-msgstr "WayForPay ID: %s"
-
-#: includes/class-wc-wayforpay-gateway.php:155
-msgid "The page where the user will be directed after payment."
-msgstr "Страница, куда будет попадать пользователь после оплаты."
-
-#: includes/class-wc-wayforpay-gateway.php:161
-msgid "The URL of the page where the user will be directed after payment."
-msgstr "Ссылка на страницу, куда будет перенаправлен пользователь после оплаты."
-
-#: includes/class-wc-wayforpay-gateway.php:61
+#: includes/class-wc-wayforpay-gateway.php:21
 msgid "Accept card payments, Apple Pay and Google Pay via WayForPay payment gateway."
 msgstr "Принимайте платежи по картам, Apple Pay и Google Pay через платежный шлюз WayForPay."
 
-#: includes/class-wc-wayforpay-gateway.php:110
+#: includes/class-wc-wayforpay-gateway.php:60
 msgid "Pay with card, Apple Pay, Google Pay"
 msgstr "Оплата картой, Apple Pay, Google Pay"
 
-#: includes/class-wc-wayforpay-gateway.php:134
-msgid "Enable test merchant for Administrators"
-msgstr "Использовать тестовый MerchantID для администраторов"
-
-#: includes/class-wc-wayforpay-gateway.php:136
-msgid "When enabled, the test merchant will be used for admins. You on your own risk."
-msgstr "Если эта опция включена, тестовый MerchantID будет использоваться для администраторов (все оплаты автоматически возвращаются). Вы делаете это на свой страх и риск."
-
-#: includes/class-wc-wayforpay-gateway.php:383
-msgid "A test merchant was used for this transaction (no money received)!"
-msgstr "Для этой транзакции был использован тестовый MerchantID (деньги не были получены)!"
-
-#: includes/class-wc-wayforpay-gateway.php:457
+#: includes/class-wc-wayforpay-gateway.php:298
 msgid "An error has occurred during redirect, if it persists, please contact us."
 msgstr "Во время перенаправления произошла ошибка, если она не устраняется, пожалуйста, свяжитесь с нами."
+
+#: includes/class-wc-wayforpay-gateway.php:96
+msgid "Return page"
+msgstr "Страница возврата"
+
+#: includes/class-wc-wayforpay-gateway.php:99
+msgid "The page where the user will be directed after payment. By default, it is the order status page."
+msgstr "Страница, на которую будет направлен пользователь после оплаты. По умолчанию это страница состояния заказа."
+
+#: includes/class-wc-wayforpay-gateway.php:103
+msgid "or specify the address"
+msgstr "или укажите адрес"
+
+#: includes/class-wc-wayforpay-gateway.php:105
+msgid "Alternatively, you can enter the URL of the page to redirect. Have a precedence over the previous option."
+msgstr "Альтернативно можно ввести URL-адрес страницы для перенаправления. Имеет преимущество перед страницей."
+
+#: includes/class-wc-wayforpay-gateway.php:213
+msgid "Not provided"
+msgstr "Не предоставлено"
+
+#: includes/class-wc-wayforpay-gateway.php:227
+msgid "Order refunded"
+msgstr "Заказ возвращен"
+
+#: includes/class-wc-wayforpay-gateway.php:231
+msgid "Refund failed: %1$s"
+msgstr "Возврат не состоялся: %1$s"
+
+#: includes/class-wc-wayforpay-gateway.php:258
+msgid "An error has occurred during processing. Please contact us to ensure your order has submitted."
+msgstr "Во время обработки произошла ошибка. Пожалуйста, свяжитесь с нами, чтобы убедиться, что ваш заказ отправлен."
+
+#: includes/class-wc-wayforpay-gateway.php:302
+#: includes/class-wc-wayforpay-gateway.php:341
+msgid "An error has occurred during processing. Signature is not valid."
+msgstr "Во время обработки произошла ошибка. Подпись не действительна."
+
+#: includes/class-wc-wayforpay-gateway.php:327
+msgid "Payment failed"
+msgstr "Платеж не прошел"
