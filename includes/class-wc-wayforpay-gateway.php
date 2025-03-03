@@ -1,5 +1,7 @@
 <?php
 
+use Automattic\WooCommerce\Enums\OrderStatus;
+
 if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
 	return;
 }
@@ -92,6 +94,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 		add_action( 'woocommerce_api_' . $this->id . '_callback', array( $this, 'receive_service_callback' ) );
 		add_action( 'woocommerce_api_' . $this->id . '_return', array( $this, 'receive_return_callback' ) );
+		add_action( 'woocommerce_thankyou', array( $this, 'post_payment_request' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 		add_action( 'woocommerce_receipt_' . $this->id, array( &$this, 'receipt_page' ) );
 	}
@@ -396,34 +399,33 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			throw new Exception( __( 'An error has occurred during payment. Signature is not valid.', 'wp-wayforpay-gateway' ) );
 		}
 
-		$order_note = sprintf( __( 'Transaction updated, current status: %s', 'wp-wayforpay-gateway' ), $response['transactionStatus'] );
 		switch ( $response['transactionStatus'] ) {
 			case self::ORDER_APPROVED:
-				$order->payment_complete();
-				$order_note = sprintf( __( 'Payment successful: %1$s %2$s.', 'wp-wayforpay-gateway' ), $response['amount'], $response['currency'] );
-
-				global $woocommerce;
-				if ( $woocommerce->cart && ! $woocommerce->cart->is_empty() ) {
-					$woocommerce->cart->empty_cart();
+				if ( ! $order->is_paid() ) {
+					$order->payment_complete();
+					$order->add_order_note( sprintf( __( 'Payment successful: %1$s %2$s.', 'wp-wayforpay-gateway' ), $response['amount'], $response['currency'] ) );
 				}
 				break;
 			case self::ORDER_REFUNDED:
 			case self::ORDER_VOIDED:
-				$order->update_status( 'refunded' );
-				$order_note = sprintf( __( 'Refunded %1$s %2$s.', 'wp-wayforpay-gateway' ), $response['amount'], $response['currency'] );
-				break;
-			case self::ORDER_EXPIRED:
-				$order->update_status( 'failed' );
-				$order_note = __( 'Payment expired.', 'wp-wayforpay-gateway' );
+				if ( $order->get_status() !== OrderStatus::REFUNDED ) {
+					$order->update_status( OrderStatus::REFUNDED );
+					$order->add_order_note( sprintf( __( 'Refunded %1$s %2$s.', 'wp-wayforpay-gateway' ), $response['amount'], $response['currency'] ) );
+				}
 				break;
 			case self::ORDER_DECLINED:
-				$order->update_status( 'failed' );
-				$order_note = sprintf( __( 'Payment failed: %1$s - %2$s.', 'wp-wayforpay-gateway' ), $response['reasonCode'] ?? 'N/A', $response['reason'] ?? 'N/A' );
+				if ( $order->get_status() !== OrderStatus::FAILED ) {
+					$order->update_status( OrderStatus::FAILED );
+					$order->add_order_note( sprintf( __( 'Payment failed: %1$s - %2$s.', 'wp-wayforpay-gateway' ), $response['reasonCode'] ?? 'N/A', $response['reason'] ?? 'N/A' ) );
+				}
 				break;
+			case self::ORDER_EXPIRED:
+				$order->update_status( OrderStatus::FAILED );
+				$order->add_order_note( __( 'Payment expired.', 'wp-wayforpay-gateway' ) );
+				break;
+			default:
+				$order->add_order_note( sprintf( __( 'Transaction updated, current status: %s', 'wp-wayforpay-gateway' ), $response['transactionStatus'] ) );
 		}
-
-		$order_note .= '<br/>' . sprintf( __( 'WayForPay ID: %s', 'wp-wayforpay-gateway' ), $response['orderReference'] );
-		$order->add_order_note( $order_note );
 
 		return $order;
 	}
@@ -464,6 +466,26 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 			echo $e->getMessage();
 		}
 		exit;
+	}
+
+	function post_payment_request( $order_id ): void {
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
+
+		if ( $order->is_paid() ) {
+			global $woocommerce;
+			if ( $woocommerce->cart && ! $woocommerce->cart->is_empty() ) {
+				$woocommerce->cart->empty_cart();
+			}
+		}
+
+		if ( $order->get_status() == OrderStatus::FAILED ) {
+			wc_add_notice( __( 'Payment failed', 'wp-wayforpay-gateway' ), 'error' );
+			wp_redirect( wc_get_checkout_url() );
+			exit;
+		}
 	}
 
 	/**
