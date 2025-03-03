@@ -146,7 +146,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 
 	private function transform_order_to_payload( $order ): array {
 		$order_args = array(
-			'orderReference' => $order->get_transaction_id(),
+			'orderReference' => $order->get_id() . self::WAYFORPAY_REFERENCE_SUFFIX . time(),
 			'orderDate'      => strtotime( $order->get_date_created() ),
 			'amount'         => $order->get_total(),
 			'currency'       => $this->get_gateway_currency(),
@@ -182,8 +182,6 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	function process_payment( $order_id ): array|bool {
 		try {
 			$order = wc_get_order( $order_id );
-			$order->set_transaction_id( $order->get_id() . self::WAYFORPAY_REFERENCE_SUFFIX . time() );
-			$order->save();
 
 			$payload               = $this->transform_order_to_payload( $order );
 			$payload['returnUrl']  = wc_get_endpoint_url( 'wc-api', $this->id . '_return', get_home_url() );
@@ -208,6 +206,10 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		}
 
 		try {
+			if ( empty( $order->get_transaction_id() ) ) {
+				throw new Exception( __( 'Transaction not found.', 'wp-wayforpay-gateway' ) );
+			}
+
 			$amount   = $amount ?: $order->get_total();
 			$currency = $this->get_gateway_currency();
 			$reason   = $reason ?: __( 'Not provided', 'wp-wayforpay-gateway' );
@@ -261,7 +263,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		switch ( $response['transactionStatus'] ) {
 			case Wayforpay::TRANSACTION_APPROVED:
 				if ( ! $order->is_paid() ) {
-					$order->payment_complete();
+					$order->payment_complete( $response['orderReference'] );
 					$order->add_order_note( sprintf( __( 'Payment successful: %1$s %2$s.', 'wp-wayforpay-gateway' ), $response['amount'], $response['currency'] ) );
 				}
 				break;
