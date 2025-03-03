@@ -18,10 +18,10 @@
     "source": "https://github.com/astappiev/wp-wayforpay-gateway"
   },
   "require": {
-    "php": ">=7.2"
+    "php": ">=7.4"
   },
   "require-dev": {
-    "wp-coding-standards/wpcs": "^3.0"
+    "wp-coding-standards/wpcs": "^3.1"
   },
   "scripts": {
 		"translate": ["@translate:pot", "@translate:update"],

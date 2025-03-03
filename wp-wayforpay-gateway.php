@@ -6,12 +6,12 @@
  * Author: Dev team WayForPay, Oleh Astappiev
  * Author: support@wayforpay.com, oleh@astappiev.me
  * Plugin URI: https://github.com/astappiev/wp-wayforpay-gateway
- * Requires PHP: 7.2
- * Requires at least: 6.0
+ * Requires PHP: 7.4
+ * Requires at least: 6.2
  * Tested up to: 6.7
  * Requires Plugins: woocommerce
- * WC requires at least: 7.6
- * WC tested up to: 9.5
+ * WC requires at least: 8.2
+ * WC tested up to: 9.6
  *
  * License: GNU General Public License v3.0
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
@@ -58,6 +58,7 @@ function wayforpay_gateway_register_payment_method(): void {
 add_action( 'plugins_loaded', 'wayforpay_gateway_init', 0 );
 
 function wayforpay_gateway_init(): void {
+	require_once WAYFORPAY_DIR . 'includes/class-wayforpay.php';
 	require_once WAYFORPAY_DIR . 'includes/class-wc-wayforpay-gateway.php';
 	require_once WAYFORPAY_DIR . 'includes/class-wc-wayforpay-gateway-blocks.php';
 }
