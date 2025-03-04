@@ -101,24 +101,24 @@ msgstr "Определяет, какой логотип отображается
 msgid "The value is controlled by the %s constant."
 msgstr "Значение контролируется константой %s."
 
-#: includes/class-wc-wayforpay-gateway.php:286
+#: includes/class-wc-wayforpay-gateway.php:288
 msgid "Transaction updated, current status: %s"
 msgstr "Транзакция обновлена, текущий статус: %s"
 
-#: includes/class-wc-wayforpay-gateway.php:265
+#: includes/class-wc-wayforpay-gateway.php:267
 msgid "Payment successful: %1$s %2$s."
 msgstr "Платеж выполнен: %1$s %2$s."
 
-#: includes/class-wc-wayforpay-gateway.php:228
-#: includes/class-wc-wayforpay-gateway.php:272
+#: includes/class-wc-wayforpay-gateway.php:230
+#: includes/class-wc-wayforpay-gateway.php:274
 msgid "Refunded %1$s %2$s."
 msgstr "Возвращено %1$s из %2$s."
 
-#: includes/class-wc-wayforpay-gateway.php:283
+#: includes/class-wc-wayforpay-gateway.php:285
 msgid "Payment expired."
 msgstr "Срок оплаты истек."
 
-#: includes/class-wc-wayforpay-gateway.php:278
+#: includes/class-wc-wayforpay-gateway.php:280
 msgid "Payment failed: %1$s - %2$s."
 msgstr "Платеж не прошел: %1$s - %2$s."
 
@@ -130,7 +130,7 @@ msgstr "Принимайте платежи по картам, Apple Pay и Goog
 msgid "Pay with card, Apple Pay, Google Pay"
 msgstr "Оплата картой, Apple Pay, Google Pay"
 
-#: includes/class-wc-wayforpay-gateway.php:298
+#: includes/class-wc-wayforpay-gateway.php:300
 msgid "An error has occurred during redirect, if it persists, please contact us."
 msgstr "Во время перенаправления произошла ошибка, если она не устраняется, пожалуйста, свяжитесь с нами."
 
@@ -150,27 +150,31 @@ msgstr "или укажите адрес"
 msgid "Alternatively, you can enter the URL of the page to redirect. Have a precedence over the previous option."
 msgstr "Альтернативно можно ввести URL-адрес страницы для перенаправления. Имеет преимущество перед страницей."
 
-#: includes/class-wc-wayforpay-gateway.php:213
+#: includes/class-wc-wayforpay-gateway.php:215
 msgid "Not provided"
 msgstr "Не предоставлено"
 
-#: includes/class-wc-wayforpay-gateway.php:227
+#: includes/class-wc-wayforpay-gateway.php:229
 msgid "Order refunded"
 msgstr "Заказ возвращен"
 
-#: includes/class-wc-wayforpay-gateway.php:231
+#: includes/class-wc-wayforpay-gateway.php:233
 msgid "Refund failed: %1$s"
 msgstr "Возврат не состоялся: %1$s"
 
-#: includes/class-wc-wayforpay-gateway.php:258
+#: includes/class-wc-wayforpay-gateway.php:260
 msgid "An error has occurred during processing. Please contact us to ensure your order has submitted."
 msgstr "Во время обработки произошла ошибка. Пожалуйста, свяжитесь с нами, чтобы убедиться, что ваш заказ отправлен."
 
-#: includes/class-wc-wayforpay-gateway.php:302
-#: includes/class-wc-wayforpay-gateway.php:341
+#: includes/class-wc-wayforpay-gateway.php:304
+#: includes/class-wc-wayforpay-gateway.php:343
 msgid "An error has occurred during processing. Signature is not valid."
 msgstr "Во время обработки произошла ошибка. Подпись не действительна."
 
-#: includes/class-wc-wayforpay-gateway.php:327
+#: includes/class-wc-wayforpay-gateway.php:329
 msgid "Payment failed"
 msgstr "Платеж не прошел"
+
+#: includes/class-wc-wayforpay-gateway.php:210
+msgid "Transaction not found."
+msgstr "Транзакция не найдена."
