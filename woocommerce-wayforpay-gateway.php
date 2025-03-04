@@ -20,17 +20,18 @@
  */
 
 use Automattic\WooCommerce\Utilities\FeaturesUtil;
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 
 define( 'WAYFORPAY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WAYFORPAY_PATH', plugin_dir_url( __FILE__ ) );
 
-add_action( 'init', 'woocommerce_wayforpay_gateway_i18n');
+add_action( 'init', 'woocommerce_wayforpay_gateway_i18n' );
 
 function woocommerce_wayforpay_gateway_i18n(): void {
 	load_plugin_textdomain( 'woocommerce-wayforpay-gateway', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 }
 
-add_action( 'before_woocommerce_init', 'woocommerce_wayforpay_gateway_declare_hpos_compatibility');
+add_action( 'before_woocommerce_init', 'woocommerce_wayforpay_gateway_declare_hpos_compatibility' );
 
 function woocommerce_wayforpay_gateway_declare_hpos_compatibility(): void {
 	if ( class_exists( FeaturesUtil::class ) ) {
@@ -38,7 +39,7 @@ function woocommerce_wayforpay_gateway_declare_hpos_compatibility(): void {
 	}
 }
 
-add_action( 'before_woocommerce_init', 'woocommerce_wayforpay_gateway_declare_cart_checkout_blocks_compatibility');
+add_action( 'before_woocommerce_init', 'woocommerce_wayforpay_gateway_declare_cart_checkout_blocks_compatibility' );
 
 function woocommerce_wayforpay_gateway_declare_cart_checkout_blocks_compatibility(): void {
 	if ( class_exists( FeaturesUtil::class ) ) {
@@ -46,13 +47,13 @@ function woocommerce_wayforpay_gateway_declare_cart_checkout_blocks_compatibilit
 	}
 }
 
-add_action( 'woocommerce_blocks_loaded', 'woocommerce_wayforpay_gateway_register_payment_method');
+add_action( 'woocommerce_blocks_loaded', 'woocommerce_wayforpay_gateway_register_payment_method' );
 
 function woocommerce_wayforpay_gateway_register_payment_method(): void {
 	add_action(
 		'woocommerce_blocks_payment_method_type_registration',
-		function ( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
-			$payment_method_registry->register( new WC_WayForPay_Gateway_Blocks() );
+		function ( $payment_method_registry ) {
+			$payment_method_registry->register( new WayForPay_Gateway_Block() );
 		}
 	);
 }
@@ -61,13 +62,13 @@ add_action( 'plugins_loaded', 'woocommerce_wayforpay_gateway_init', 0 );
 
 function woocommerce_wayforpay_gateway_init(): void {
 	require_once WAYFORPAY_DIR . 'includes/class-wayforpay.php';
-	require_once WAYFORPAY_DIR . 'includes/class-wc-wayforpay-gateway.php';
-	require_once WAYFORPAY_DIR . 'includes/class-wc-wayforpay-gateway-blocks.php';
+	require_once WAYFORPAY_DIR . 'includes/class-wayforpay-gateway.php';
+	require_once WAYFORPAY_DIR . 'includes/class-wayforpay-gateway-block.php';
 }
 
-add_filter( 'woocommerce_payment_gateways', 'woocommerce_wayforpay_gateway_add_gateway');
+add_filter( 'woocommerce_payment_gateways', 'woocommerce_wayforpay_gateway_add_gateway' );
 
-function woocommerce_wayforpay_gateway_add_gateway($methods ) {
-	$methods[] = 'WC_Wayforpay_Gateway';
+function woocommerce_wayforpay_gateway_add_gateway( $methods ) {
+	$methods[] = 'Wayforpay_Gateway';
 	return $methods;
 }

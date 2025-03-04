@@ -6,8 +6,8 @@ if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
 	return;
 }
 
-class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
-	const WAYFORPAY_REFERENCE_SUFFIX = '_woo_w4p_';
+class Wayforpay_Gateway extends WC_Payment_Gateway {
+	const WAYFORPAY_REFERENCE_SUFFIX = '_woo_';
 
 	const WAYFORPAY_MERCHANT_TEST    = 'WAYFORPAY_MERCHANT_TEST';
 	const WAYFORPAY_MERCHANT_ACCOUNT = 'WAYFORPAY_MERCHANT_ACCOUNT';
@@ -145,9 +145,16 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	}
 
 	private function transform_order_to_payload( $order ): array {
+		/**
+		 * Filters the order reference suffix.
+		 *
+		 * @param string $suffix the suffix to be appended to the order reference.
+		 */
+		$reference_suffix = apply_filters( 'woocommerce_wayforpay_gateway_order_reference_suffix', 'woo_' . time() );
+
 		$order_args = array(
-			'orderReference' => $order->get_id() . self::WAYFORPAY_REFERENCE_SUFFIX . time(),
-			'orderDate'      => strtotime( $order->get_date_created() ),
+			'orderReference' => $order->get_id() . '_' . $reference_suffix,
+			'orderDate'      => $order->get_date_created()->getTimestamp(),
 			'amount'         => $order->get_total(),
 			'currency'       => $this->get_gateway_currency(),
 		);
@@ -254,8 +261,8 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 	 * @throws Exception
 	 */
 	protected function handle_service_callback( $response ): WC_Order {
-		[$orderId,] = explode( self::WAYFORPAY_REFERENCE_SUFFIX, $response['orderReference'] );
-		$order      = wc_get_order( $orderId );
+		[$orderId, $suffix] = explode( '_', $response['orderReference'], 2 );
+		$order              = wc_get_order( $orderId );
 		if ( $order === false ) {
 			throw new Exception( __( 'An error has occurred during processing. Please contact us to ensure your order has submitted.', 'woocommerce-wayforpay-gateway' ) );
 		}

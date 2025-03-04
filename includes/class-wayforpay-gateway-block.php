@@ -2,7 +2,7 @@
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 
-final class WC_WayForPay_Gateway_Blocks extends AbstractPaymentMethodType {
+final class WayForPay_Gateway_Block extends AbstractPaymentMethodType {
 
 	/**
 	 * Payment method name defined by payment methods extending this class.
@@ -12,12 +12,12 @@ final class WC_WayForPay_Gateway_Blocks extends AbstractPaymentMethodType {
 	protected $name = 'wayforpay';
 
 	/**
-	 * @var WC_Wayforpay_Gateway
+	 * @var Wayforpay_Gateway
 	 */
 	private $gateway;
 
 	public function initialize(): void {
-		$this->gateway  = new WC_Wayforpay_Gateway();
+		$this->gateway  = new Wayforpay_Gateway();
 		$this->settings = $this->gateway->settings;
 	}
 
@@ -38,18 +38,19 @@ final class WC_WayForPay_Gateway_Blocks extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles(): array {
 		$block_asset = require WAYFORPAY_DIR . 'public/block/index.asset.php';
 		wp_register_script(
-			'wc-wayforpay-gateway-blocks',
+			'woocommerce-wayforpay-gateway-blocks',
 			WAYFORPAY_PATH . 'public/block/index.js',
 			$block_asset['dependencies'],
 			$block_asset['version'],
 			true
 		);
 
-		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( 'wc-wayforpay-gateway-blocks', 'woocommerce-wayforpay-gateway', WAYFORPAY_DIR . 'languages/' );
-		}
+		// there are no translations for this block yet
+		// if ( function_exists( 'wp_set_script_translations' ) ) {
+		// wp_set_script_translations( 'woocommerce-wayforpay-gateway-blocks', 'woocommerce-wayforpay-gateway', WAYFORPAY_DIR . 'languages/' );
+		// }
 
-		return array( 'wc-wayforpay-gateway-blocks' );
+		return array( 'woocommerce-wayforpay-gateway-blocks' );
 	}
 
 	/**

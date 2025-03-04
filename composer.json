@@ -1,41 +1,47 @@
 {
-  "name": "astappiev/woocommerce-wayforpay-gateway",
-  "description": "Wayforpay Payment Gateway for WooCommerce",
-  "type": "wordpress-plugin",
-  "license": "GPL-3.0",
-  "authors": [
-    {
-      "name": "Dev team WayForPay",
-      "email": "support@wayforpay.com"
-    },
-    {
-      "name": "Oleh Astappiev",
-      "email": "oleh@astappiev.me"
-    }
-  ],
-  "support": {
-    "issues": "https://github.com/astappiev/woocommerce-wayforpay-gateway/issues",
-    "source": "https://github.com/astappiev/woocommerce-wayforpay-gateway"
-  },
-  "require": {
-    "php": ">=7.4"
-  },
-  "require-dev": {
-    "wp-coding-standards/wpcs": "^3.1"
-  },
-  "scripts": {
-		"translate": ["@translate:pot", "@translate:update"],
-		"translate:pot": "wp i18n make-pot . languages/woocommerce-wayforpay-gateway.pot --exclude='node_modules,public' --skip-js --skip-block-json",
+	"name": "astappiev/woocommerce-wayforpay-gateway",
+	"description": "Wayforpay Payment Gateway for WooCommerce",
+	"type": "wordpress-plugin",
+	"license": "GPL-3.0",
+	"authors": [
+		{
+			"name": "Dev team WayForPay",
+			"email": "support@wayforpay.com"
+		},
+		{
+			"name": "Oleh Astappiev",
+			"email": "oleh@astappiev.me"
+		}
+	],
+	"support": {
+		"issues": "https://github.com/astappiev/woocommerce-wayforpay-gateway/issues",
+		"source": "https://github.com/astappiev/woocommerce-wayforpay-gateway"
+	},
+	"require": {
+		"php": ">=7.4"
+	},
+	"require-dev": {
+		"wp-coding-standards/wpcs": "^3.1"
+	},
+	"scripts": {
+		"translate": [
+			"@translate:pot",
+			"@translate:update"
+		],
+		"translate:pot": "wp i18n make-pot . languages/woocommerce-wayforpay-gateway.pot --exclude='node_modules,vendor,public' --skip-js --skip-block-json",
 		"translate:update": "wp i18n update-po languages/woocommerce-wayforpay-gateway.pot",
-		"translate:compile": ["@translate:js", "@translate:mo"],
+		"translate:compile": [
+			"@translate:js",
+			"@translate:mo"
+		],
 		"translate:js": "wp i18n make-json languages --no-purge",
 		"translate:mo": "wp i18n make-mo languages",
-    "lint": "vendor/bin/phpcs --standard=WordPress --extensions=php --ignore=vendor,public -ps .",
-    "fix": "vendor/bin/phpcbf --standard=WordPress --extensions=php --ignore=vendor,public -ps ."
-  },
-  "config": {
-    "allow-plugins": {
-      "dealerdirect/phpcodesniffer-composer-installer": true
-    }
-  }
+		"lint": "vendor/bin/phpcs --standard=WordPress --extensions=php --ignore=node_modules,vendor,public -ps .",
+		"fix": "vendor/bin/phpcbf --standard=WordPress --extensions=php --ignore=node_modules,vendor,public -ps ."
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	}
 }
