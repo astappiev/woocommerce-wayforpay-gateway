@@ -15,23 +15,23 @@ msgstr ""
 "X-Domain: wp-wayforpay-gateway\n"
 
 #. Plugin Name of the plugin
-#: wp-wayforpay-gateway.php
+#: woocommerce-wayforpay-gateway.php
 msgid "WooCommerce WayForPay Gateway"
 msgstr ""
 
 #. Plugin URI of the plugin
-#: wp-wayforpay-gateway.php
+#: woocommerce-wayforpay-gateway.php
 msgid "https://github.com/astappiev/wp-wayforpay-gateway"
 msgstr ""
 
 #. Description of the plugin
-#: wp-wayforpay-gateway.php
+#: woocommerce-wayforpay-gateway.php
 #: includes/class-wc-wayforpay-gateway.php:67
 msgid "Pay securely via the WayForPay Payment Engine."
 msgstr ""
 
 #. Author of the plugin
-#: wp-wayforpay-gateway.php
+#: woocommerce-wayforpay-gateway.php
 msgid "Dev team WayForPay, Oleh Astappiev"
 msgstr ""
 

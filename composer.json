@@ -1,5 +1,5 @@
 {
-  "name": "astappiev/wp-wayforpay-gateway",
+  "name": "astappiev/woocommerce-wayforpay-gateway",
   "description": "Wayforpay Payment Gateway for WooCommerce",
   "type": "wordpress-plugin",
   "license": "GPL-3.0",
@@ -14,8 +14,8 @@
     }
   ],
   "support": {
-    "issues": "https://github.com/astappiev/wp-wayforpay-gateway/issues",
-    "source": "https://github.com/astappiev/wp-wayforpay-gateway"
+    "issues": "https://github.com/astappiev/woocommerce-wayforpay-gateway/issues",
+    "source": "https://github.com/astappiev/woocommerce-wayforpay-gateway"
   },
   "require": {
     "php": ">=7.4"

@@ -5,7 +5,7 @@
  * Version: 2.0.0-alpha1
  * Author: Dev team WayForPay, Oleh Astappiev
  * Author: support@wayforpay.com, oleh@astappiev.me
- * Plugin URI: https://github.com/astappiev/wp-wayforpay-gateway
+ * Plugin URI: https://github.com/astappiev/woocommerce-wayforpay-gateway
  * Requires PHP: 7.4
  * Requires at least: 6.2
  * Tested up to: 6.7

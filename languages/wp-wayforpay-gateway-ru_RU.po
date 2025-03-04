@@ -25,17 +25,17 @@ msgid "Select Page"
 msgstr "Выберите страницу"
 
 #. Plugin Name of the plugin
-#: wp-wayforpay-gateway.php
+#: woocommerce-wayforpay-gateway.php
 msgid "WooCommerce WayForPay Gateway"
 msgstr "Платежный шлюз WayForPay для WooCommerce"
 
 #. Plugin URI of the plugin
-#: wp-wayforpay-gateway.php
-msgid "https://github.com/astappiev/wp-wayforpay-gateway"
-msgstr "https://github.com/astappiev/wp-wayforpay-gateway"
+#: woocommerce-wayforpay-gateway.php
+msgid "https://github.com/astappiev/woocommerce-wayforpay-gateway"
+msgstr "https://github.com/astappiev/woocommerce-wayforpay-gateway"
 
 #. Author of the plugin
-#: wp-wayforpay-gateway.php
+#: woocommerce-wayforpay-gateway.php
 msgid "Dev team WayForPay, Oleh Astappiev"
 msgstr "Команда разработчиков WayForPay, Oleh Astappiev"
 
@@ -56,7 +56,7 @@ msgid "Description"
 msgstr "Описание платежного метода"
 
 #. Description of the plugin
-#: wp-wayforpay-gateway.php
+#: woocommerce-wayforpay-gateway.php
 #: includes/class-wc-wayforpay-gateway.php:67
 msgid "Pay securely via the WayForPay Payment Engine."
 msgstr "Оплачивайте безопасно через платежную систему WayForPay."
