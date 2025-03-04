@@ -20,7 +20,7 @@ class WC_Wayforpay_Gateway extends WC_Payment_Gateway {
 		$this->method_title       = 'WayForPay';
 		$this->method_description = __( 'Accept card payments, Apple Pay and Google Pay via WayForPay payment gateway.', 'wp-wayforpay-gateway' );
 		$this->has_fields         = false;
-		$this->supports           = array( 'products' ); // TODO: implement refunds
+		$this->supports           = array( 'products', 'refunds' );
 
 		$this->init_settings();
 		if ( ! empty( $this->settings['showlogo'] ) && $this->settings['showlogo'] !== 'no' ) {
