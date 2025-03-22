@@ -138,7 +138,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 
 	private function get_gateway_language(): string {
 		$lang = substr( get_bloginfo( 'language' ), 0, 2 );
-		if ( $lang == 'uk' ) {
+		if ( $lang === 'uk' ) {
 			$lang = 'ua';
 		}
 		return $lang;
@@ -221,14 +221,14 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			$currency = $this->get_gateway_currency();
 			$reason   = $reason ?: __( 'Not provided', 'woocommerce-wayforpay-gateway' );
 
-			$orderPayload = array(
+			$payload = array(
 				'orderReference' => $order->get_transaction_id(),
 				'amount'         => $amount,
 				'currency'       => $currency,
 				'comment'        => $reason,
 			);
 
-			$result = $this->wayforpay->refund( $orderPayload );
+			$result = $this->wayforpay->refund( $payload );
 
 			switch ( $result['transactionStatus'] ) {
 				case Wayforpay::TRANSACTION_REFUNDED:
@@ -261,8 +261,8 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 	 * @throws Exception
 	 */
 	protected function handle_service_callback( $response ): WC_Order {
-		[$orderId, $suffix] = explode( '_', $response['orderReference'], 2 );
-		$order              = wc_get_order( $orderId );
+		[$order_id, $suffix] = explode( '_', $response['orderReference'], 2 );
+		$order               = wc_get_order( $order_id );
 		if ( $order === false ) {
 			throw new Exception( __( 'An error has occurred during processing. Please contact us to ensure your order has submitted.', 'woocommerce-wayforpay-gateway' ) );
 		}
@@ -288,8 +288,10 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 				}
 				break;
 			case Wayforpay::TRANSACTION_EXPIRED:
-				$order->update_status( OrderStatus::FAILED );
-				$order->add_order_note( __( 'Payment expired.', 'woocommerce-wayforpay-gateway' ) );
+				if ( $order->get_status() === OrderStatus::PENDING ) { // required to prevent changing order status by session expired callbacks when the order is already processed in another transaction
+					$order->update_status( OrderStatus::FAILED );
+					$order->add_order_note( __( 'Payment expired.', 'woocommerce-wayforpay-gateway' ) );
+				}
 				break;
 			default:
 				$order->add_order_note( sprintf( __( 'Transaction updated, current status: %s', 'woocommerce-wayforpay-gateway' ), $response['transactionStatus'] ) );
@@ -312,7 +314,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			}
 
 			$order = $this->handle_service_callback( $_POST );
-			wp_redirect( $this->get_callback_url( $order ) );
+			wp_safe_redirect( $this->get_callback_url( $order ) );
 		} catch ( Exception $e ) {
 			echo $e->getMessage();
 		}
@@ -332,9 +334,9 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			}
 		}
 
-		if ( $order->get_status() == OrderStatus::FAILED ) {
+		if ( $order->get_status() === OrderStatus::FAILED ) {
 			wc_add_notice( __( 'Payment failed', 'woocommerce-wayforpay-gateway' ), 'error' );
-			wp_redirect( wc_get_checkout_url() );
+			wp_safe_redirect( wc_get_checkout_url() );
 			exit;
 		}
 	}

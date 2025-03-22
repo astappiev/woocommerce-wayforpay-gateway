@@ -77,7 +77,7 @@ class Wayforpay {
 		// this hack with ?offline is needed to avoid POST form and client-side submit
 		$result = $this->send_request( $payload, self::WAYFORPAY_URL . '?behavior=offline' );
 
-		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] == self::TRANSACTION_DECLINED ) {
+		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
 			throw new Exception( $result['reason'] );
 		}
 
@@ -100,7 +100,7 @@ class Wayforpay {
 
 		$result = $this->send_request( $payload, self::WAYFORPAY_API );
 
-		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] == self::TRANSACTION_DECLINED ) {
+		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
 			throw new Exception( $result['reason'] );
 		}
 
@@ -154,22 +154,22 @@ class Wayforpay {
 		return false;
 	}
 
-	private function hash_payload( $payload, $keys, bool $hashOnly = false ): string {
+	private function hash_payload( $payload, $keys, bool $hash_only = false ): string {
 		$hash = array();
-		foreach ( $keys as $dataKey ) {
-			if ( ! isset( $payload[ $dataKey ] ) ) {
+		foreach ( $keys as $key ) {
+			if ( ! isset( $payload[ $key ] ) ) {
 				continue;
 			}
-			if ( is_array( $payload[ $dataKey ] ) ) {
-				foreach ( $payload[ $dataKey ] as $v ) {
+			if ( is_array( $payload[ $key ] ) ) {
+				foreach ( $payload[ $key ] as $v ) {
 					$hash[] = $v;
 				}
 			} else {
-				$hash [] = $payload[ $dataKey ];
+				$hash [] = $payload[ $key ];
 			}
 		}
 		$hash = implode( ';', $hash );
-		if ( $hashOnly ) {
+		if ( $hash_only ) {
 			return base64_encode( $hash );
 		} else {
 			return hash_hmac( 'md5', $hash, $this->merchant_secret );
