@@ -272,17 +272,21 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 				if ( ! $order->is_paid() ) {
 					$order->payment_complete( $response['orderReference'] );
 					$order->add_order_note( sprintf( __( 'Payment successful: %1$s %2$s.', 'woocommerce-wayforpay-gateway' ), $response['amount'], $response['currency'] ) );
+				} elseif ( $order->get_transaction_id() !== $response['orderReference'] ) { // ignore duplicates
+					$order->add_order_note( sprintf( __( 'Unexpected payment received: %1$s. The order could be double paid.', 'woocommerce-wayforpay-gateway' ), $response['orderReference'] ) );
 				}
 				break;
 			case Wayforpay::TRANSACTION_REFUNDED:
 			case Wayforpay::TRANSACTION_VOIDED:
-				if ( $order->get_status() !== OrderStatus::REFUNDED ) {
+				if ( $order->get_status() !== OrderStatus::REFUNDED && $order->get_transaction_id() === $response['orderReference'] ) {
 					$order->update_status( OrderStatus::REFUNDED );
 					$order->add_order_note( sprintf( __( 'Refunded %1$s %2$s.', 'woocommerce-wayforpay-gateway' ), $response['amount'], $response['currency'] ) );
+				} elseif ( $order->get_status() !== OrderStatus::REFUNDED ) { // ignore duplicates
+					$order->add_order_note( sprintf( __( 'Got a refund, with a wrong order reference: %1$s.', 'woocommerce-wayforpay-gateway' ), $response['orderReference'] ) );
 				}
 				break;
 			case Wayforpay::TRANSACTION_DECLINED:
-				if ( $order->get_status() !== OrderStatus::FAILED ) {
+				if ( $order->get_status() !== OrderStatus::FAILED && ( ! $order->is_paid() || ( $order->is_paid() && $order->get_transaction_id() === $response['orderReference'] ) ) ) {
 					$order->update_status( OrderStatus::FAILED );
 					$order->add_order_note( sprintf( __( 'Payment failed: %1$s - %2$s.', 'woocommerce-wayforpay-gateway' ), $response['reasonCode'] ?? 'N/A', $response['reason'] ?? 'N/A' ) );
 				}
