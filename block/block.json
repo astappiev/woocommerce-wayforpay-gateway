@@ -2,7 +2,6 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "astappiev/woocommerce-wayforpay-gateway",
-	"version": "2.0.0",
 	"title": "WooCommerce WayForPay Gateway",
 	"category": "payments",
 	"editorScript": "file:./index.js"

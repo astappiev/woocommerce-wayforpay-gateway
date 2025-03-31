@@ -1,7 +1,6 @@
 {
 	"name": "woocommerce-wayforpay-gateway",
 	"private": true,
-	"version": "2.0.0",
 	"scripts": {
 		"format": "wp-scripts format",
 		"lint:css": "wp-scripts lint-style 'block/**/*.scss'",
