@@ -15,6 +15,7 @@ class Wayforpay {
 	const TRANSACTION_DECLINED             = 'Declined';
 	const TRANSACTION_EXPIRED              = 'Expired';
 
+	// Charge (host-to-host) uses the same signature fields as Purchase.
 	private const SIGNATURE_KEYS_PURCHASE = array(
 		'merchantAccount',
 		'merchantDomainName',
@@ -43,6 +44,18 @@ class Wayforpay {
 		'cardPan',
 		'transactionStatus',
 		'reasonCode',
+	);
+
+	private const SIGNATURE_KEYS_REFUND_RESPONSE = array(
+		'merchantAccount',
+		'orderReference',
+		'transactionStatus',
+		'reasonCode',
+	);
+
+	private const SIGNATURE_KEYS_CHECK_STATUS = array(
+		'merchantAccount',
+		'orderReference',
 	);
 
 	private const SIGNATURE_KEYS_SERVICE_RESPONSE = array(
@@ -85,6 +98,33 @@ class Wayforpay {
 	}
 
 	/**
+	 * Charge a card using a previously obtained recToken (server-to-server, no customer redirect).
+	 * Used for subscription renewal payments.
+	 *
+	 * Documentation:
+	 * https://wiki.wayforpay.com/en/view/852194
+	 *
+	 * @throws Exception
+	 */
+	public function charge( $payload ): array {
+		$payload['transactionType']               = 'CHARGE';
+		$payload['merchantDomainName']            = $payload['merchantDomainName'] ?? $_SERVER['SERVER_NAME'];
+		$payload['apiVersion']                    = 2;
+		$payload['merchantTransactionType']       = 'SALE';
+		$payload['merchantTransactionSecureType'] = 'AUTO';
+		$payload['merchantAccount']               = $this->merchant_account;
+		$payload['merchantSignature']             = $this->hash_payload( $payload, self::SIGNATURE_KEYS_PURCHASE );
+
+		$result = $this->send_request( $payload, self::WAYFORPAY_API );
+
+		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
+			throw new Exception( $result['reason'] );
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Refund request is to be used for making of assets' refund or cancellation of payment.
 	 *
 	 * Documentation:
@@ -100,11 +140,35 @@ class Wayforpay {
 
 		$result = $this->send_request( $payload, self::WAYFORPAY_API );
 
+		if ( ! empty( $result['merchantSignature'] ) && ! $this->verify_payload( $result, self::SIGNATURE_KEYS_REFUND_RESPONSE ) ) {
+			throw new Exception( __( 'Refund response signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
+		}
+
 		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
 			throw new Exception( $result['reason'] );
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Check the status of a previously created order.
+	 *
+	 * Documentation:
+	 * https://wiki.wayforpay.com/en/view/852117
+	 *
+	 * @throws Exception
+	 */
+	public function check_status( string $order_reference ): array {
+		$payload                      = array(
+			'transactionType' => 'CHECK_STATUS',
+			'merchantAccount' => $this->merchant_account,
+			'orderReference'  => $order_reference,
+			'apiVersion'      => 1,
+		);
+		$payload['merchantSignature'] = $this->hash_payload( $payload, self::SIGNATURE_KEYS_CHECK_STATUS );
+
+		return $this->send_request( $payload, self::WAYFORPAY_API );
 	}
 
 	/**

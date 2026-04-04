@@ -7,8 +7,6 @@ if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
 }
 
 class Wayforpay_Gateway extends WC_Payment_Gateway {
-	const WAYFORPAY_REFERENCE_SUFFIX = '_woo_';
-
 	const WAYFORPAY_MERCHANT_TEST    = 'WAYFORPAY_MERCHANT_TEST';
 	const WAYFORPAY_MERCHANT_ACCOUNT = 'WAYFORPAY_MERCHANT_ACCOUNT';
 	const WAYFORPAY_MERCHANT_SECRET  = 'WAYFORPAY_MERCHANT_SECRET';
@@ -21,6 +19,23 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		$this->method_description = __( 'Accept card payments, Apple Pay and Google Pay via WayForPay payment gateway.', 'woocommerce-wayforpay-gateway' );
 		$this->has_fields         = false;
 		$this->supports           = array( 'products', 'refunds' );
+		if ( class_exists( 'WC_Subscriptions_Order' ) ) {
+			$this->supports = array_merge(
+				$this->supports,
+				array(
+					'subscriptions',
+					'subscription_cancellation',
+					'subscription_suspension',
+					'subscription_reactivation',
+					'subscription_amount_changes',
+					'subscription_date_changes',
+					'subscription_payment_method_change',
+					'subscription_payment_method_change_customer',
+					'subscription_payment_method_change_admin',
+					'multiple_subscriptions',
+				)
+			);
+		}
 
 		$this->init_settings();
 		if ( ! empty( $this->settings['showlogo'] ) && $this->settings['showlogo'] !== 'no' ) {
@@ -44,6 +59,10 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		add_action( 'woocommerce_api_' . $this->id . '_return', array( $this, 'receive_return_callback' ) );
 		add_action( 'woocommerce_thankyou', array( $this, 'post_payment_request' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
+
+		if ( class_exists( 'WC_Subscriptions_Order' ) ) {
+			add_action( 'woocommerce_scheduled_subscription_payment_' . $this->id, array( $this, 'process_subscription_payment' ), 10, 2 );
+		}
 	}
 
 	function init_form_fields(): void {
@@ -179,7 +198,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			'clientCity'      => $order->get_billing_city(),
 			'clientPhone'     => $order->get_billing_phone(),
 			'clientEmail'     => $order->get_billing_email(),
-			'clientCountry'   => strlen( $order->get_billing_country() ) !== 3 ? 'UKR' : $order->get_billing_country(),
+			'clientCountry'   => $this->country_alpha2_to_alpha3( $order->get_billing_country() ),
 			'clientZipCode'   => $order->get_billing_postcode(),
 		);
 
@@ -275,6 +294,16 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 				} elseif ( $order->get_transaction_id() !== $response['orderReference'] ) { // ignore duplicates
 					$order->add_order_note( sprintf( __( 'Unexpected payment received: %1$s. The order could be double paid.', 'woocommerce-wayforpay-gateway' ), $response['orderReference'] ) );
 				}
+				if ( ! empty( $response['recToken'] ) ) {
+					$order->update_meta_data( '_wayforpay_rec_token', $response['recToken'] );
+					$order->save();
+					if ( function_exists( 'wcs_get_subscriptions_for_order' ) ) {
+						foreach ( wcs_get_subscriptions_for_order( $order ) as $subscription ) {
+							$subscription->update_meta_data( '_wayforpay_rec_token', $response['recToken'] );
+							$subscription->save();
+						}
+					}
+				}
 				break;
 			case Wayforpay::TRANSACTION_REFUNDED:
 			case Wayforpay::TRANSACTION_VOIDED:
@@ -310,24 +339,25 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 	function receive_return_callback(): void {
 		try {
 			if ( empty( $_POST ) ) {
-				die( __( 'An error has occurred during redirect, if it persists, please contact us.', 'woocommerce-wayforpay-gateway' ) );
+				throw new Exception( __( 'An error has occurred during redirect, if it persists, please contact us.', 'woocommerce-wayforpay-gateway' ) );
 			}
 
 			if ( ! $this->wayforpay->verify_callback( $_POST ) ) {
-				die( __( 'An error has occurred during processing. Signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
+				throw new Exception( __( 'An error has occurred during processing. Signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
 			}
 
 			$order = $this->handle_service_callback( $_POST );
 			wp_safe_redirect( $this->get_callback_url( $order ) );
 		} catch ( Exception $e ) {
-			echo $e->getMessage();
+			wc_add_notice( $e->getMessage(), 'error' );
+			wp_safe_redirect( wc_get_checkout_url() );
 		}
 		exit;
 	}
 
 	function post_payment_request( $order_id ): void {
 		$order = wc_get_order( $order_id );
-		if ( ! $order ) {
+		if ( ! $order || $order->get_payment_method() !== $this->id ) {
 			return;
 		}
 
@@ -366,6 +396,67 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		exit;
 	}
 
+	/**
+	 * Called by WooCommerce Subscriptions for each scheduled renewal.
+	 * Charges the customer's saved card using the recToken obtained during the initial payment.
+	 */
+	public function process_subscription_payment( float $amount, WC_Order $renewal_order ): void {
+		// Free-trial renewals have zero amount — complete immediately without charging.
+		if ( $amount == 0 ) {
+			$renewal_order->payment_complete();
+			return;
+		}
+
+		$subscriptions = wcs_get_subscriptions_for_renewal_order( $renewal_order );
+		$subscription  = reset( $subscriptions );
+
+		if ( ! $subscription ) {
+			$renewal_order->update_status( OrderStatus::FAILED, __( 'Subscription not found for this renewal order.', 'woocommerce-wayforpay-gateway' ) );
+			return;
+		}
+
+		$rec_token = $subscription->get_meta( '_wayforpay_rec_token' );
+		if ( empty( $rec_token ) ) {
+			$renewal_order->update_status( OrderStatus::FAILED, __( 'No saved payment token found. The customer must update their payment method.', 'woocommerce-wayforpay-gateway' ) );
+			return;
+		}
+
+		try {
+			$payload           = $this->transform_order_to_payload( $renewal_order );
+			$payload['amount'] = $amount;
+
+			// Keep product prices consistent with the charged amount for single-item subscriptions.
+			if ( count( $payload['productPrice'] ) === 1 ) {
+				$payload['productPrice'][0] = round( $amount / $payload['productCount'][0], 2 );
+			}
+
+			$payload['recToken']        = $rec_token;
+			$payload['clientIpAddress'] = $renewal_order->get_customer_ip_address() ?: ( $_SERVER['SERVER_ADDR'] ?? '127.0.0.1' );
+
+			$result = $this->wayforpay->charge( $payload );
+
+			$renewal_order->payment_complete( $result['orderReference'] );
+			$renewal_order->add_order_note(
+				sprintf(
+					__( 'Subscription renewal payment successful: %1$s %2$s.', 'woocommerce-wayforpay-gateway' ),
+					$result['amount'],
+					$result['currency']
+				)
+			);
+
+			// WayForPay may rotate the recToken; persist the latest one.
+			if ( ! empty( $result['recToken'] ) ) {
+				$subscription->update_meta_data( '_wayforpay_rec_token', $result['recToken'] );
+				$subscription->save();
+			}
+		} catch ( Exception $e ) {
+			$renewal_order->update_status(
+				OrderStatus::FAILED,
+				sprintf( __( 'Subscription renewal failed: %s', 'woocommerce-wayforpay-gateway' ), $e->getMessage() )
+			);
+		}
+	}
+
 	function wayforpay_get_pages( $title = false, $indent = true ): array {
 		$wp_pages  = get_pages( 'sort_column=menu_order' );
 		$page_list = array();
@@ -387,5 +478,61 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			$page_list[ $page->ID ] = $prefix . $page->post_title;
 		}
 		return $page_list;
+	}
+
+	private function country_alpha2_to_alpha3( string $alpha2 ): string {
+		static $map = array(
+			'AF' => 'AFG', 'AX' => 'ALA', 'AL' => 'ALB', 'DZ' => 'DZA', 'AS' => 'ASM',
+			'AD' => 'AND', 'AO' => 'AGO', 'AI' => 'AIA', 'AQ' => 'ATA', 'AG' => 'ATG',
+			'AR' => 'ARG', 'AM' => 'ARM', 'AW' => 'ABW', 'AU' => 'AUS', 'AT' => 'AUT',
+			'AZ' => 'AZE', 'BS' => 'BHS', 'BH' => 'BHR', 'BD' => 'BGD', 'BB' => 'BRB',
+			'BY' => 'BLR', 'BE' => 'BEL', 'BZ' => 'BLZ', 'BJ' => 'BEN', 'BM' => 'BMU',
+			'BT' => 'BTN', 'BO' => 'BOL', 'BQ' => 'BES', 'BA' => 'BIH', 'BW' => 'BWA',
+			'BV' => 'BVT', 'BR' => 'BRA', 'IO' => 'IOT', 'BN' => 'BRN', 'BG' => 'BGR',
+			'BF' => 'BFA', 'BI' => 'BDI', 'CV' => 'CPV', 'KH' => 'KHM', 'CM' => 'CMR',
+			'CA' => 'CAN', 'KY' => 'CYM', 'CF' => 'CAF', 'TD' => 'TCD', 'CL' => 'CHL',
+			'CN' => 'CHN', 'CX' => 'CXR', 'CC' => 'CCK', 'CO' => 'COL', 'KM' => 'COM',
+			'CG' => 'COG', 'CD' => 'COD', 'CK' => 'COK', 'CR' => 'CRI', 'CI' => 'CIV',
+			'HR' => 'HRV', 'CU' => 'CUB', 'CW' => 'CUW', 'CY' => 'CYP', 'CZ' => 'CZE',
+			'DK' => 'DNK', 'DJ' => 'DJI', 'DM' => 'DMA', 'DO' => 'DOM', 'EC' => 'ECU',
+			'EG' => 'EGY', 'SV' => 'SLV', 'GQ' => 'GNQ', 'ER' => 'ERI', 'EE' => 'EST',
+			'SZ' => 'SWZ', 'ET' => 'ETH', 'FK' => 'FLK', 'FO' => 'FRO', 'FJ' => 'FJI',
+			'FI' => 'FIN', 'FR' => 'FRA', 'GF' => 'GUF', 'PF' => 'PYF', 'TF' => 'ATF',
+			'GA' => 'GAB', 'GM' => 'GMB', 'GE' => 'GEO', 'DE' => 'DEU', 'GH' => 'GHA',
+			'GI' => 'GIB', 'GR' => 'GRC', 'GL' => 'GRL', 'GD' => 'GRD', 'GP' => 'GLP',
+			'GU' => 'GUM', 'GT' => 'GTM', 'GG' => 'GGY', 'GN' => 'GIN', 'GW' => 'GNB',
+			'GY' => 'GUY', 'HT' => 'HTI', 'HM' => 'HMD', 'VA' => 'VAT', 'HN' => 'HND',
+			'HK' => 'HKG', 'HU' => 'HUN', 'IS' => 'ISL', 'IN' => 'IND', 'ID' => 'IDN',
+			'IR' => 'IRN', 'IQ' => 'IRQ', 'IE' => 'IRL', 'IM' => 'IMN', 'IL' => 'ISR',
+			'IT' => 'ITA', 'JM' => 'JAM', 'JP' => 'JPN', 'JE' => 'JEY', 'JO' => 'JOR',
+			'KZ' => 'KAZ', 'KE' => 'KEN', 'KI' => 'KIR', 'KP' => 'PRK', 'KR' => 'KOR',
+			'KW' => 'KWT', 'KG' => 'KGZ', 'LA' => 'LAO', 'LV' => 'LVA', 'LB' => 'LBN',
+			'LS' => 'LSO', 'LR' => 'LBR', 'LY' => 'LBY', 'LI' => 'LIE', 'LT' => 'LTU',
+			'LU' => 'LUX', 'MO' => 'MAC', 'MG' => 'MDG', 'MW' => 'MWI', 'MY' => 'MYS',
+			'MV' => 'MDV', 'ML' => 'MLI', 'MT' => 'MLT', 'MH' => 'MHL', 'MQ' => 'MTQ',
+			'MR' => 'MRT', 'MU' => 'MUS', 'YT' => 'MYT', 'MX' => 'MEX', 'FM' => 'FSM',
+			'MD' => 'MDA', 'MC' => 'MCO', 'MN' => 'MNG', 'ME' => 'MNE', 'MS' => 'MSR',
+			'MA' => 'MAR', 'MZ' => 'MOZ', 'MM' => 'MMR', 'NA' => 'NAM', 'NR' => 'NRU',
+			'NP' => 'NPL', 'NL' => 'NLD', 'NC' => 'NCL', 'NZ' => 'NZL', 'NI' => 'NIC',
+			'NE' => 'NER', 'NG' => 'NGA', 'NU' => 'NIU', 'NF' => 'NFK', 'MK' => 'MKD',
+			'MP' => 'MNP', 'NO' => 'NOR', 'OM' => 'OMN', 'PK' => 'PAK', 'PW' => 'PLW',
+			'PS' => 'PSE', 'PA' => 'PAN', 'PG' => 'PNG', 'PY' => 'PRY', 'PE' => 'PER',
+			'PH' => 'PHL', 'PN' => 'PCN', 'PL' => 'POL', 'PT' => 'PRT', 'PR' => 'PRI',
+			'QA' => 'QAT', 'RE' => 'REU', 'RO' => 'ROU', 'RU' => 'RUS', 'RW' => 'RWA',
+			'BL' => 'BLM', 'SH' => 'SHN', 'KN' => 'KNA', 'LC' => 'LCA', 'MF' => 'MAF',
+			'PM' => 'SPM', 'VC' => 'VCT', 'WS' => 'WSM', 'SM' => 'SMR', 'ST' => 'STP',
+			'SA' => 'SAU', 'SN' => 'SEN', 'RS' => 'SRB', 'SC' => 'SYC', 'SL' => 'SLE',
+			'SG' => 'SGP', 'SX' => 'SXM', 'SK' => 'SVK', 'SI' => 'SVN', 'SB' => 'SLB',
+			'SO' => 'SOM', 'ZA' => 'ZAF', 'GS' => 'SGS', 'SS' => 'SSD', 'ES' => 'ESP',
+			'LK' => 'LKA', 'SD' => 'SDN', 'SR' => 'SUR', 'SJ' => 'SJM', 'SE' => 'SWE',
+			'CH' => 'CHE', 'SY' => 'SYR', 'TW' => 'TWN', 'TJ' => 'TJK', 'TZ' => 'TZA',
+			'TH' => 'THA', 'TL' => 'TLS', 'TG' => 'TGO', 'TK' => 'TKL', 'TO' => 'TON',
+			'TT' => 'TTO', 'TN' => 'TUN', 'TR' => 'TUR', 'TM' => 'TKM', 'TC' => 'TCA',
+			'TV' => 'TUV', 'UG' => 'UGA', 'UA' => 'UKR', 'AE' => 'ARE', 'GB' => 'GBR',
+			'US' => 'USA', 'UM' => 'UMI', 'UY' => 'URY', 'UZ' => 'UZB', 'VU' => 'VUT',
+			'VE' => 'VEN', 'VN' => 'VNM', 'VG' => 'VGB', 'VI' => 'VIR', 'WF' => 'WLF',
+			'EH' => 'ESH', 'YE' => 'YEM', 'ZM' => 'ZMB', 'ZW' => 'ZWE',
+		);
+		return $map[ strtoupper( $alpha2 ) ] ?? 'UKR';
 	}
 }
