@@ -12,15 +12,15 @@ msgstr ""
 "Language: uk\n"
 "Plural-Forms: nplurals=3; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : ((n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 1 : 2);\n"
 
-#: includes/class-wayforpay-gateway.php:68
+#: includes/class-wayforpay-gateway.php:71
 msgid "Enable/Disable"
 msgstr "Увімкнути або вимкнути"
 
-#: includes/class-wayforpay-gateway.php:94
+#: includes/class-wayforpay-gateway.php:97
 msgid "Merchant Secret key"
 msgstr "Merchant Secret key"
 
-#: includes/class-wayforpay-gateway.php:114
+#: includes/class-wayforpay-gateway.php:117
 msgid "Select Page"
 msgstr "Виберіть сторінку"
 
@@ -39,90 +39,90 @@ msgstr "https://github.com/astappiev/woocommerce-wayforpay-gateway"
 msgid "Dev team WayForPay, Oleh Astappiev"
 msgstr "Команда розробників WayForPay, Oleh Astappiev"
 
-#: includes/class-wayforpay-gateway.php:70
+#: includes/class-wayforpay-gateway.php:73
 msgid "Enable WayForPay Payment Engine"
 msgstr "Увімкнути платіжну систему WayForPay"
 
-#: includes/class-wayforpay-gateway.php:74
+#: includes/class-wayforpay-gateway.php:77
 msgid "Title"
 msgstr "Назва платіжного методу"
 
-#: includes/class-wayforpay-gateway.php:77
+#: includes/class-wayforpay-gateway.php:80
 msgid "This controls the title which user sees during checkout."
 msgstr "Назва платіжного методу, яку може прочитати користувач під час оплати."
 
-#: includes/class-wayforpay-gateway.php:81
+#: includes/class-wayforpay-gateway.php:84
 msgid "Description"
 msgstr "Опис платіжного методу"
 
 #. Description of the plugin
 #: woocommerce-wayforpay-gateway.php
-#: includes/class-wayforpay-gateway.php:83
+#: includes/class-wayforpay-gateway.php:86
 msgid "Pay securely via the WayForPay Payment Engine."
 msgstr "Сплачуйте безпечно через платіжну систему WayForPay."
 
-#: includes/class-wayforpay-gateway.php:84
+#: includes/class-wayforpay-gateway.php:87
 msgid "This controls the description which user sees during checkout."
 msgstr "Додатковий коментар про цей метод оплати, який може прочитати користувач під час оплати."
 
-#: includes/class-wayforpay-gateway.php:88
+#: includes/class-wayforpay-gateway.php:91
 msgid "Merchant Account"
 msgstr "Merchant Account"
 
-#: includes/class-wayforpay-gateway.php:90
+#: includes/class-wayforpay-gateway.php:93
 msgid "Seller identifier. This value is assigned to you by WayForPay."
 msgstr "Ідентифікатор продавця. Це значення присвоюється вам системою WayForPay."
 
-#: includes/class-wayforpay-gateway.php:96
+#: includes/class-wayforpay-gateway.php:99
 msgid "Signature secret key. This value is assigned to you by WayForPay."
 msgstr "Секретний ключ продавця. Це значення присвоюється вам системою WayForPay."
 
-#: includes/class-wayforpay-gateway.php:100
+#: includes/class-wayforpay-gateway.php:103
 msgid "Display Logo"
 msgstr "Відображення логотипу"
 
-#: includes/class-wayforpay-gateway.php:103
+#: includes/class-wayforpay-gateway.php:106
 msgid "No logo"
 msgstr "Без логотипу"
 
-#: includes/class-wayforpay-gateway.php:104
+#: includes/class-wayforpay-gateway.php:107
 msgid "WayForPay Logo"
 msgstr "Логотип WayForPay"
 
-#: includes/class-wayforpay-gateway.php:105
+#: includes/class-wayforpay-gateway.php:108
 msgid "Payment Processors Logos"
 msgstr "Логотипи платіжних систем"
 
-#: includes/class-wayforpay-gateway.php:108
+#: includes/class-wayforpay-gateway.php:111
 msgid "Determines which logo is shown near this payment method on checkout."
 msgstr "Визначає, який логотип відображається біля цього способу оплати на касі."
 
-#: includes/class-wayforpay-gateway.php:128
+#: includes/class-wayforpay-gateway.php:131
 #, php-format
 msgid "The value is controlled by the %s constant."
 msgstr "Значення контролюється константою %s."
 
-#: includes/class-wayforpay-gateway.php:383
+#: includes/class-wayforpay-gateway.php:366
 #, php-format
 msgid "Transaction updated, current status: %s"
 msgstr "Транзакцію оновлено, поточний статус: %s"
 
-#: includes/class-wayforpay-gateway.php:346
+#: includes/class-wayforpay-gateway.php:327
 #, php-format
 msgid "Payment successful: %1$s %2$s."
 msgstr "Платіж виконано: %1$s %2$s."
 
-#: includes/class-wayforpay-gateway.php:309
-#: includes/class-wayforpay-gateway.php:365
+#: includes/class-wayforpay-gateway.php:290
+#: includes/class-wayforpay-gateway.php:348
 #, php-format
 msgid "Refunded %1$s %2$s."
 msgstr "Повернуто %1$s з %2$s."
 
-#: includes/class-wayforpay-gateway.php:379
+#: includes/class-wayforpay-gateway.php:362
 msgid "Payment expired."
 msgstr "Термін оплати закінчився."
 
-#: includes/class-wayforpay-gateway.php:373
+#: includes/class-wayforpay-gateway.php:356
 #, php-format
 msgid "Payment failed: %1$s - %2$s."
 msgstr "Платіж не пройшов: %1$s - %2$s."
@@ -131,84 +131,84 @@ msgstr "Платіж не пройшов: %1$s - %2$s."
 msgid "Accept card payments, Apple Pay and Google Pay via WayForPay payment gateway."
 msgstr "Приймайте платежі карткою, Apple Pay та Google Pay через платіжний шлюз WayForPay."
 
-#: includes/class-wayforpay-gateway.php:76
+#: includes/class-wayforpay-gateway.php:79
 msgid "Pay with card, Apple Pay, Google Pay"
 msgstr "Оплачуйте карткою, Apple Pay, Google Pay"
 
-#: includes/class-wayforpay-gateway.php:395
+#: includes/class-wayforpay-gateway.php:378
 msgid "An error has occurred during redirect, if it persists, please contact us."
 msgstr "Під час перенаправлення сталася помилка, якщо вона не усувається, будь ласка, зв'яжіться з нами."
 
-#: includes/class-wayforpay-gateway.php:112
+#: includes/class-wayforpay-gateway.php:115
 msgid "Return page"
 msgstr "Сторінка повернення"
 
-#: includes/class-wayforpay-gateway.php:115
+#: includes/class-wayforpay-gateway.php:118
 msgid "The page where the user will be directed after payment. By default, it is the order status page."
 msgstr "Сторінка, на яку користувач буде перенаправлений після оплати. За замовчуванням це сторінка статусу замовлення."
 
-#: includes/class-wayforpay-gateway.php:119
+#: includes/class-wayforpay-gateway.php:122
 msgid "or specify the address"
 msgstr "або вкажіть адресу"
 
-#: includes/class-wayforpay-gateway.php:121
+#: includes/class-wayforpay-gateway.php:124
 msgid "Alternatively, you can enter the URL of the page to redirect. Have a precedence over the previous option."
 msgstr "Альтернативно, ви можете ввести URL-адресу сторінки для перенаправлення. Має перевагу над сторінкою."
 
-#: includes/class-wayforpay-gateway.php:294
+#: includes/class-wayforpay-gateway.php:275
 msgid "Not provided"
 msgstr "Не надано"
 
-#: includes/class-wayforpay-gateway.php:308
+#: includes/class-wayforpay-gateway.php:289
 msgid "Order refunded"
 msgstr "Замовлення повернуто"
 
-#: includes/class-wayforpay-gateway.php:312
+#: includes/class-wayforpay-gateway.php:293
 #, php-format
 msgid "Refund failed: %1$s"
 msgstr "Повернення не вдалося: %1$s"
 
-#: includes/class-wayforpay-gateway.php:339
+#: includes/class-wayforpay-gateway.php:320
 msgid "An error has occurred during processing. Please contact us to ensure your order has submitted."
 msgstr "Сталася помилка під час обробки. Будь ласка, зв'яжіться з нами, щоб переконатися, що ваше замовлення було подано."
 
-#: includes/class-wayforpay-gateway.php:399
-#: includes/class-wayforpay-gateway.php:439
+#: includes/class-wayforpay-gateway.php:382
+#: includes/class-wayforpay-gateway.php:422
 msgid "An error has occurred during processing. Signature is not valid."
 msgstr "Сталася помилка під час обробки. Підпис не дійсний."
 
-#: includes/class-wayforpay-gateway.php:425
+#: includes/class-wayforpay-gateway.php:408
 msgid "Payment failed"
 msgstr "Платіж не пройшов"
 
-#: includes/class-wayforpay-gateway.php:289
+#: includes/class-wayforpay-gateway.php:270
 msgid "Transaction not found."
 msgstr "Транзакцію не знайдено."
 
-#: includes/class-wayforpay-gateway.php:348
+#: includes/class-wayforpay-gateway.php:329
 #, php-format
 msgid "Unexpected payment received: %1$s. The order could be double paid."
 msgstr "Отримано неочікуваний платіж: %1$s. Замовлення може бути оплачене двічі."
 
-#: includes/class-wayforpay-gateway.php:367
+#: includes/class-wayforpay-gateway.php:350
 #, php-format
 msgid "Got a refund, with a wrong order reference: %1$s."
 msgstr "Отримали повернення коштів, з помилковим номером: %1$s."
 
-#: includes/class-wayforpay-gateway.php:467
+#: includes/class-wayforpay-gateway.php:450
 msgid "Subscription not found for this renewal order."
 msgstr "Підписка для подовження цього замовлення не знайдена."
 
-#: includes/class-wayforpay-gateway.php:473
+#: includes/class-wayforpay-gateway.php:456
 msgid "No saved payment token found. The customer must update their payment method."
 msgstr "Не знайдено збереженого платіжного токена. Клієнт повинен оновити свій спосіб оплати."
 
-#: includes/class-wayforpay-gateway.php:493
+#: includes/class-wayforpay-gateway.php:470
 #, php-format
 msgid "Subscription renewal payment successful: %1$s %2$s."
 msgstr "Оплата продовження підписки пройшла успішно: %1$s %2$s."
 
-#: includes/class-wayforpay-gateway.php:506
+#: includes/class-wayforpay-gateway.php:484
 #, php-format
 msgid "Subscription renewal failed: %s"
 msgstr "Не вдалося продовжити підписку: %s"
@@ -216,3 +216,12 @@ msgstr "Не вдалося продовжити підписку: %s"
 #: includes/class-wayforpay.php:144
 msgid "Refund response signature is not valid."
 msgstr "Підпис відповіді на повернення не дійсний."
+
+#: includes/class-wayforpay-gateway.php:219
+#, php-format
+msgid "Order %s"
+msgstr "Замовлення %s"
+
+#: includes/class-wayforpay-gateway.php:341
+msgid "Warning: A subscription was purchased but no recurring payment token (recToken) was received from WayForPay. The automatic renewal will not work."
+msgstr "Застереження: передплата була придбана, але від WayForPay не надійшов токен для періодичних платежів (recToken). Автоматичне поновлення не працюватиме."

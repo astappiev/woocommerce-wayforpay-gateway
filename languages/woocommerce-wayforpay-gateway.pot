@@ -2,14 +2,14 @@
 # This file is distributed under the GNU General Public License v3.0.
 msgid ""
 msgstr ""
-"Project-Id-Version: WooCommerce WayForPay Gateway 2.0.1\n"
+"Project-Id-Version: WooCommerce WayForPay Gateway 2.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-wayforpay-gateway\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-04-04T09:48:30+00:00\n"
+"POT-Creation-Date: 2026-04-14T20:55:10+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: woocommerce-wayforpay-gateway\n"
@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: woocommerce-wayforpay-gateway.php
-#: includes/class-wayforpay-gateway.php:83
+#: includes/class-wayforpay-gateway.php:86
 msgid "Pay securely via the WayForPay Payment Engine."
 msgstr ""
 
@@ -39,178 +39,187 @@ msgstr ""
 msgid "Accept card payments, Apple Pay and Google Pay via WayForPay payment gateway."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:68
+#: includes/class-wayforpay-gateway.php:71
 msgid "Enable/Disable"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:70
+#: includes/class-wayforpay-gateway.php:73
 msgid "Enable WayForPay Payment Engine"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:74
+#: includes/class-wayforpay-gateway.php:77
 msgid "Title"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:76
+#: includes/class-wayforpay-gateway.php:79
 msgid "Pay with card, Apple Pay, Google Pay"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:77
+#: includes/class-wayforpay-gateway.php:80
 msgid "This controls the title which user sees during checkout."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:81
+#: includes/class-wayforpay-gateway.php:84
 msgid "Description"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:84
+#: includes/class-wayforpay-gateway.php:87
 msgid "This controls the description which user sees during checkout."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:88
+#: includes/class-wayforpay-gateway.php:91
 msgid "Merchant Account"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:90
+#: includes/class-wayforpay-gateway.php:93
 msgid "Seller identifier. This value is assigned to you by WayForPay."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:94
+#: includes/class-wayforpay-gateway.php:97
 msgid "Merchant Secret key"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:96
+#: includes/class-wayforpay-gateway.php:99
 msgid "Signature secret key. This value is assigned to you by WayForPay."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:100
+#: includes/class-wayforpay-gateway.php:103
 msgid "Display Logo"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:103
+#: includes/class-wayforpay-gateway.php:106
 msgid "No logo"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:104
+#: includes/class-wayforpay-gateway.php:107
 msgid "WayForPay Logo"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:105
+#: includes/class-wayforpay-gateway.php:108
 msgid "Payment Processors Logos"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:108
+#: includes/class-wayforpay-gateway.php:111
 msgid "Determines which logo is shown near this payment method on checkout."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:112
+#: includes/class-wayforpay-gateway.php:115
 msgid "Return page"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:114
+#: includes/class-wayforpay-gateway.php:117
 msgid "Select Page"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:115
+#: includes/class-wayforpay-gateway.php:118
 msgid "The page where the user will be directed after payment. By default, it is the order status page."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:119
+#: includes/class-wayforpay-gateway.php:122
 msgid "or specify the address"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:121
+#: includes/class-wayforpay-gateway.php:124
 msgid "Alternatively, you can enter the URL of the page to redirect. Have a precedence over the previous option."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:128
+#: includes/class-wayforpay-gateway.php:131
 #, php-format
 msgid "The value is controlled by the %s constant."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:289
+#: includes/class-wayforpay-gateway.php:219
+#, php-format
+msgid "Order %s"
+msgstr ""
+
+#: includes/class-wayforpay-gateway.php:270
 msgid "Transaction not found."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:294
+#: includes/class-wayforpay-gateway.php:275
 msgid "Not provided"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:308
+#: includes/class-wayforpay-gateway.php:289
 msgid "Order refunded"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:309
-#: includes/class-wayforpay-gateway.php:365
+#: includes/class-wayforpay-gateway.php:290
+#: includes/class-wayforpay-gateway.php:348
 #, php-format
 msgid "Refunded %1$s %2$s."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:312
+#: includes/class-wayforpay-gateway.php:293
 #, php-format
 msgid "Refund failed: %1$s"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:339
+#: includes/class-wayforpay-gateway.php:320
 msgid "An error has occurred during processing. Please contact us to ensure your order has submitted."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:346
+#: includes/class-wayforpay-gateway.php:327
 #, php-format
 msgid "Payment successful: %1$s %2$s."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:348
+#: includes/class-wayforpay-gateway.php:329
 #, php-format
 msgid "Unexpected payment received: %1$s. The order could be double paid."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:367
+#: includes/class-wayforpay-gateway.php:341
+msgid "Warning: A subscription was purchased but no recurring payment token (recToken) was received from WayForPay. The automatic renewal will not work."
+msgstr ""
+
+#: includes/class-wayforpay-gateway.php:350
 #, php-format
 msgid "Got a refund, with a wrong order reference: %1$s."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:373
+#: includes/class-wayforpay-gateway.php:356
 #, php-format
 msgid "Payment failed: %1$s - %2$s."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:379
+#: includes/class-wayforpay-gateway.php:362
 msgid "Payment expired."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:383
+#: includes/class-wayforpay-gateway.php:366
 #, php-format
 msgid "Transaction updated, current status: %s"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:395
+#: includes/class-wayforpay-gateway.php:378
 msgid "An error has occurred during redirect, if it persists, please contact us."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:399
-#: includes/class-wayforpay-gateway.php:439
+#: includes/class-wayforpay-gateway.php:382
+#: includes/class-wayforpay-gateway.php:422
 msgid "An error has occurred during processing. Signature is not valid."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:425
+#: includes/class-wayforpay-gateway.php:408
 msgid "Payment failed"
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:467
+#: includes/class-wayforpay-gateway.php:450
 msgid "Subscription not found for this renewal order."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:473
+#: includes/class-wayforpay-gateway.php:456
 msgid "No saved payment token found. The customer must update their payment method."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:493
+#: includes/class-wayforpay-gateway.php:470
 #, php-format
 msgid "Subscription renewal payment successful: %1$s %2$s."
 msgstr ""
 
-#: includes/class-wayforpay-gateway.php:506
+#: includes/class-wayforpay-gateway.php:484
 #, php-format
 msgid "Subscription renewal failed: %s"
 msgstr ""

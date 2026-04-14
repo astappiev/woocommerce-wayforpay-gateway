@@ -163,7 +163,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		return $lang;
 	}
 
-	private function transform_order_to_payload( $order ): array {
+	private function transform_order_to_payload( $order, ?int $amount = null ): array {
 		/**
 		 * Filters the order reference suffix.
 		 *
@@ -171,24 +171,54 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		 */
 		$reference_suffix = apply_filters( 'woocommerce_wayforpay_gateway_order_reference_suffix', 'woo_' . time() );
 
-		$order_args = array(
+		$amount  = $amount ?: $order->get_total();
+		$payload = array(
 			'orderReference' => $order->get_id() . '_' . $reference_suffix,
 			'orderDate'      => $order->get_date_created()->getTimestamp(),
-			'amount'         => $order->get_total(),
+			'amount'         => $amount,
 			'currency'       => $this->get_gateway_currency(),
 		);
 
-		$items = $order->get_items();
-		if ( is_array( $items ) && ! empty( $items ) ) {
+		$items              = $order->get_items();
+		$use_order_fallback = empty( $items );
+
+		if ( ! $use_order_fallback ) {
+			$product_sum = 0;
 			foreach ( $items as $item ) {
-				$order_args['productName'][]  = $item['name'];
-				$order_args['productCount'][] = $item['qty'];
-				$order_args['productPrice'][] = round( $item['line_total'] / $item['qty'], 2 );
+				$payload['productName'][]  = $item->get_name();
+				$payload['productCount'][] = $item->get_quantity();
+				$price                     = round( ( $item->get_total() + $item->get_total_tax() ) / $item->get_quantity(), 2 );
+				$payload['productPrice'][] = $price;
+				$product_sum              += $price * $item->get_quantity();
 			}
-		} else {
-			$order_args['productName'][]  = $order_args['orderReference'];
-			$order_args['productCount'][] = 1;
-			$order_args['productPrice'][] = $order_args['amount'];
+
+			if ( $order->get_shipping_total() > 0 ) {
+				$payload['productName'][]  = __( 'Shipping', 'woocommerce' );
+				$payload['productCount'][] = 1;
+				$price                     = round( $order->get_shipping_total() + $order->get_shipping_tax(), 2 );
+				$payload['productPrice'][] = $price;
+				$product_sum              += $price;
+			}
+
+			foreach ( $order->get_fees() as $fee ) {
+				$payload['productName'][]  = $fee->get_name();
+				$payload['productCount'][] = 1;
+				$price                     = round( $fee->get_total() + $fee->get_total_tax(), 2 );
+				$payload['productPrice'][] = $price;
+				$product_sum              += $price;
+			}
+
+			$diff = round( $amount - $product_sum, 2 );
+			if ( $diff != 0 ) {
+				$use_order_fallback = true;
+			}
+		}
+
+		if ( $use_order_fallback ) {
+			// Prevent wrong prices or empty item list by overriding products with "Order #" reference
+			$payload['productName']  = array( sprintf( __( 'Order %s', 'woocommerce-wayforpay-gateway' ), $order->get_order_number() ) );
+			$payload['productCount'] = array( 1 );
+			$payload['productPrice'] = array( $amount );
 		}
 
 		$client_args = array(
@@ -202,7 +232,11 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			'clientZipCode'   => $order->get_billing_postcode(),
 		);
 
-		return array_merge( $order_args, $client_args );
+		if ($order->get_customer_id() > 0 ) {
+			$client_args['clientAccountId'] = (string) $order->get_customer_id();
+		}
+
+		return array_merge( $payload, $client_args );
 	}
 
 	function process_payment( $order_id ): array|bool {
@@ -297,12 +331,15 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 				if ( ! empty( $response['recToken'] ) ) {
 					$order->update_meta_data( '_wayforpay_rec_token', $response['recToken'] );
 					$order->save();
+
 					if ( function_exists( 'wcs_get_subscriptions_for_order' ) ) {
 						foreach ( wcs_get_subscriptions_for_order( $order ) as $subscription ) {
 							$subscription->update_meta_data( '_wayforpay_rec_token', $response['recToken'] );
 							$subscription->save();
 						}
 					}
+				} elseif ( function_exists( 'wcs_order_contains_subscription' ) && ( wcs_order_contains_subscription( $order ) || wcs_is_subscription( $order ) || wcs_order_contains_renewal( $order ) ) ) {
+					$order->add_order_note( __( 'Warning: A subscription was purchased but no recurring payment token (recToken) was received from WayForPay. The automatic renewal will not work.', 'woocommerce-wayforpay-gateway' ) );
 				}
 				break;
 			case Wayforpay::TRANSACTION_REFUNDED:
@@ -422,14 +459,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		}
 
 		try {
-			$payload           = $this->transform_order_to_payload( $renewal_order );
-			$payload['amount'] = $amount;
-
-			// Keep product prices consistent with the charged amount for single-item subscriptions.
-			if ( count( $payload['productPrice'] ) === 1 ) {
-				$payload['productPrice'][0] = round( $amount / $payload['productCount'][0], 2 );
-			}
-
+			$payload                    = $this->transform_order_to_payload( $renewal_order, $amount );
 			$payload['recToken']        = $rec_token;
 			$payload['clientIpAddress'] = $renewal_order->get_customer_ip_address() ?: ( $_SERVER['SERVER_ADDR'] ?? '127.0.0.1' );
 
