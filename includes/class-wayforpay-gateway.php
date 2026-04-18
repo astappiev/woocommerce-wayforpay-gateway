@@ -18,24 +18,20 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		$this->method_title       = 'WayForPay';
 		$this->method_description = __( 'Accept card payments, Apple Pay and Google Pay via WayForPay payment gateway.', 'woocommerce-wayforpay-gateway' );
 		$this->has_fields         = false;
-		$this->supports           = array( 'products', 'refunds' );
-		if ( class_exists( 'WC_Subscriptions_Order' ) ) {
-			$this->supports = array_merge(
-				$this->supports,
-				array(
-					'subscriptions',
-					'subscription_cancellation',
-					'subscription_suspension',
-					'subscription_reactivation',
-					'subscription_amount_changes',
-					'subscription_date_changes',
-					'subscription_payment_method_change',
-					'subscription_payment_method_change_customer',
-					'subscription_payment_method_change_admin',
-					'multiple_subscriptions',
-				)
-			);
-		}
+		$this->supports           = array(
+			'products',
+			'refunds', // you need to reach WayForPay support to activate refunds
+			'subscriptions', // you need to reach WayForPay support to activate recurrent payments
+			'subscription_cancellation',
+			'subscription_suspension',
+			'subscription_reactivation',
+			'subscription_amount_changes',
+			'subscription_date_changes',
+			'subscription_payment_method_change',
+			'subscription_payment_method_change_customer',
+			'subscription_payment_method_change_admin',
+			'multiple_subscriptions',
+		);
 
 		$this->init_settings();
 		if ( ! empty( $this->settings['showlogo'] ) && $this->settings['showlogo'] !== 'no' ) {
@@ -59,10 +55,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		add_action( 'woocommerce_api_' . $this->id . '_return', array( $this, 'receive_return_callback' ) );
 		add_action( 'woocommerce_thankyou', array( $this, 'post_payment_request' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
-
-		if ( class_exists( 'WC_Subscriptions_Order' ) ) {
-			add_action( 'woocommerce_scheduled_subscription_payment_' . $this->id, array( $this, 'process_subscription_payment' ), 10, 2 );
-		}
+		add_action( 'woocommerce_scheduled_subscription_payment_' . $this->id, array( $this, 'process_subscription_payment' ), 10, 2 );
 	}
 
 	function init_form_fields(): void {
@@ -232,7 +225,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			'clientZipCode'   => $order->get_billing_postcode(),
 		);
 
-		if ($order->get_customer_id() > 0 ) {
+		if ( $order->get_customer_id() > 0 ) {
 			$client_args['clientAccountId'] = (string) $order->get_customer_id();
 		}
 
@@ -328,18 +321,30 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 				} elseif ( $order->get_transaction_id() !== $response['orderReference'] ) { // ignore duplicates
 					$order->add_order_note( sprintf( __( 'Unexpected payment received: %1$s. The order could be double paid.', 'woocommerce-wayforpay-gateway' ), $response['orderReference'] ) );
 				}
-				if ( ! empty( $response['recToken'] ) ) {
-					$order->update_meta_data( '_wayforpay_rec_token', $response['recToken'] );
-					$order->save();
 
-					if ( function_exists( 'wcs_get_subscriptions_for_order' ) ) {
-						foreach ( wcs_get_subscriptions_for_order( $order ) as $subscription ) {
-							$subscription->update_meta_data( '_wayforpay_rec_token', $response['recToken'] );
-							$subscription->save();
+				// Handle recurring token for subscriptions
+				if ( function_exists( 'wcs_get_subscriptions_for_order' ) ) {
+					$subscriptions = wcs_get_subscriptions_for_order( $order );
+					if ( ! empty( $subscriptions ) ) {
+						if ( ! empty( $response['recToken'] ) ) {
+							// Save token using WooCommerce Payment Token API
+							foreach ( $subscriptions as $subscription ) {
+								$subscription->update_meta_data( '_wayforpay_rec_token', $response['recToken'] );
+								$subscription->save();
+							}
+
+							$order->add_order_note( __( 'Recurring payment token saved for automatic renewals.', 'woocommerce-wayforpay-gateway' ) );
+						} else {
+							// No recToken received — switch subscriptions to manual renewal
+							foreach ( $subscriptions as $subscription ) {
+								$subscription->update_manual( true );
+								$subscription->add_order_note( __( 'Switched to manual renewal: no recurring payment token found.', 'woocommerce-wayforpay-gateway' ) );
+								$subscription->save();
+							}
+
+							$order->add_order_note( __( 'Warning: Subscription(s) switched to manual renewal because no recurring payment token (recToken) was received from WayForPay.', 'woocommerce-wayforpay-gateway' ) );
 						}
 					}
-				} elseif ( function_exists( 'wcs_order_contains_subscription' ) && ( wcs_order_contains_subscription( $order ) || wcs_is_subscription( $order ) || wcs_order_contains_renewal( $order ) ) ) {
-					$order->add_order_note( __( 'Warning: A subscription was purchased but no recurring payment token (recToken) was received from WayForPay. The automatic renewal will not work.', 'woocommerce-wayforpay-gateway' ) );
 				}
 				break;
 			case Wayforpay::TRANSACTION_REFUNDED:
@@ -474,7 +479,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 				)
 			);
 
-			// WayForPay may rotate the recToken; persist the latest one.
+			// WayForPay may rotate the recToken; update the stored token if a new one is returned.
 			if ( ! empty( $result['recToken'] ) ) {
 				$subscription->update_meta_data( '_wayforpay_rec_token', $result['recToken'] );
 				$subscription->save();
