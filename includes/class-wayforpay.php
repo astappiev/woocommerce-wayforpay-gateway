@@ -1,22 +1,25 @@
 <?php
 
 class Wayforpay {
-	private const WAYFORPAY_URL = 'https://secure.wayforpay.com/pay';
-	private const WAYFORPAY_API = 'https://api.wayforpay.com/api';
+	private const string WAYFORPAY_URL = 'https://secure.wayforpay.com/pay';
+	private const string WAYFORPAY_API = 'https://api.wayforpay.com/api';
 
-	const TEST_MERCHANT_ACCOUNT = 'test_merch_n1';
-	const TEST_MERCHANT_SECRET  = 'flk3409refn54t54t*FNJRET';
+	const string TEST_MERCHANT_ACCOUNT = 'test_merch_n1';
+	const string TEST_MERCHANT_SECRET  = 'flk3409refn54t54t*FNJRET';
 
 	// https://wiki.wayforpay.com/en/view/852131
-	const TRANSACTION_APPROVED             = 'Approved';
-	const TRANSACTION_REFUNDED             = 'Refunded';
-	const TRANSACTION_REFUND_IN_PROCESSING = 'RefundInProcessing'; // In case when not enough funds on shop balance
-	const TRANSACTION_VOIDED               = 'Voided';
-	const TRANSACTION_DECLINED             = 'Declined';
-	const TRANSACTION_EXPIRED              = 'Expired';
+	const string TRANSACTION_APPROVED             = 'Approved';
+	const string TRANSACTION_REFUNDED             = 'Refunded';
+	const string TRANSACTION_REFUND_IN_PROCESSING = 'RefundInProcessing'; // In case when not enough funds on shop balance
+	const string TRANSACTION_VOIDED               = 'Voided';
+	const string TRANSACTION_DECLINED             = 'Declined';
+	const string TRANSACTION_EXPIRED              = 'Expired';
+
+	// https://wiki.wayforpay.com/en/view/852131
+	const int RESPONSE_CODE_OK = 1100;
 
 	// Charge (host-to-host) uses the same signature fields as Purchase.
-	private const SIGNATURE_KEYS_PURCHASE = array(
+	private const array SIGNATURE_KEYS_PURCHASE = array(
 		'merchantAccount',
 		'merchantDomainName',
 		'orderReference',
@@ -28,14 +31,14 @@ class Wayforpay {
 		'productPrice',
 	);
 
-	private const SIGNATURE_KEYS_REFUND = array(
+	private const array SIGNATURE_KEYS_REFUND = array(
 		'merchantAccount',
 		'orderReference',
 		'amount',
 		'currency',
 	);
 
-	private const SIGNATURE_KEYS_SERVICE_CALLBACK = array(
+	private const array SIGNATURE_KEYS_SERVICE_CALLBACK = array(
 		'merchantAccount',
 		'orderReference',
 		'amount',
@@ -46,19 +49,19 @@ class Wayforpay {
 		'reasonCode',
 	);
 
-	private const SIGNATURE_KEYS_REFUND_RESPONSE = array(
+	private const array SIGNATURE_KEYS_REFUND_RESPONSE = array(
 		'merchantAccount',
 		'orderReference',
 		'transactionStatus',
 		'reasonCode',
 	);
 
-	private const SIGNATURE_KEYS_CHECK_STATUS = array(
+	private const array SIGNATURE_KEYS_CHECK_STATUS = array(
 		'merchantAccount',
 		'orderReference',
 	);
 
-	private const SIGNATURE_KEYS_SERVICE_RESPONSE = array(
+	private const array SIGNATURE_KEYS_SERVICE_RESPONSE = array(
 		'orderReference',
 		'status',
 		'time',
@@ -115,7 +118,7 @@ class Wayforpay {
 		$payload['merchantAccount']               = $this->merchant_account;
 		$payload['merchantSignature']             = $this->hash_payload( $payload, self::SIGNATURE_KEYS_PURCHASE );
 
-		$result = $this->send_request( $payload, self::WAYFORPAY_API );
+		$result = $this->send_request( $payload );
 
 		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
 			throw new Exception( $result['reason'] );
@@ -138,7 +141,7 @@ class Wayforpay {
 		$payload['merchantAccount']   = $this->merchant_account;
 		$payload['merchantSignature'] = $this->hash_payload( $payload, self::SIGNATURE_KEYS_REFUND );
 
-		$result = $this->send_request( $payload, self::WAYFORPAY_API );
+		$result = $this->send_request( $payload );
 
 		if ( ! empty( $result['merchantSignature'] ) && ! $this->verify_payload( $result, self::SIGNATURE_KEYS_REFUND_RESPONSE ) ) {
 			throw new Exception( __( 'Refund response signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
@@ -168,7 +171,7 @@ class Wayforpay {
 		);
 		$payload['merchantSignature'] = $this->hash_payload( $payload, self::SIGNATURE_KEYS_CHECK_STATUS );
 
-		return $this->send_request( $payload, self::WAYFORPAY_API );
+		return $this->send_request( $payload );
 	}
 
 	/**
@@ -188,7 +191,13 @@ class Wayforpay {
 			throw new Exception( $response->get_error_message() );
 		}
 
-		return json_decode( $response['body'], true );
+		$result = json_decode( $response['body'], true );
+
+		if ( ! empty( $result['reasonCode'] ) && $result['reasonCode'] != self::RESPONSE_CODE_OK ) {
+			throw new Exception( $result['reason'] );
+		}
+
+		return $result;
 	}
 
 	public function verify_callback( $payload ): bool {
