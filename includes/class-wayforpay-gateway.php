@@ -1,15 +1,16 @@
 <?php
 
 use Automattic\WooCommerce\Enums\OrderStatus;
+use Automattic\WooCommerce\Enums\PaymentGatewayFeature;
 
 if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
 	return;
 }
 
 class Wayforpay_Gateway extends WC_Payment_Gateway {
-	const WAYFORPAY_MERCHANT_TEST    = 'WAYFORPAY_MERCHANT_TEST';
-	const WAYFORPAY_MERCHANT_ACCOUNT = 'WAYFORPAY_MERCHANT_ACCOUNT';
-	const WAYFORPAY_MERCHANT_SECRET  = 'WAYFORPAY_MERCHANT_SECRET';
+	const string WAYFORPAY_MERCHANT_TEST    = 'WAYFORPAY_MERCHANT_TEST';
+	const string WAYFORPAY_MERCHANT_ACCOUNT = 'WAYFORPAY_MERCHANT_ACCOUNT';
+	const string WAYFORPAY_MERCHANT_SECRET  = 'WAYFORPAY_MERCHANT_SECRET';
 
 	protected Wayforpay $wayforpay;
 
@@ -19,18 +20,18 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		$this->method_description = __( 'Accept card payments, Apple Pay and Google Pay via WayForPay payment gateway.', 'woocommerce-wayforpay-gateway' );
 		$this->has_fields         = false;
 		$this->supports           = array(
-			'products',
-			'refunds', // you need to reach WayForPay support to activate refunds
-			'subscriptions', // you need to reach WayForPay support to activate recurrent payments
-			'subscription_cancellation',
-			'subscription_suspension',
-			'subscription_reactivation',
-			'subscription_amount_changes',
-			'subscription_date_changes',
-			'subscription_payment_method_change',
-			'subscription_payment_method_change_customer',
-			'subscription_payment_method_change_admin',
-			'multiple_subscriptions',
+			PaymentGatewayFeature::PRODUCTS,
+			PaymentGatewayFeature::REFUNDS,       // you need to reach WayForPay support to activate refunds
+			PaymentGatewayFeature::SUBSCRIPTIONS, // you need to reach WayForPay support to activate recurrent payments
+			PaymentGatewayFeature::SUBSCRIPTION_CANCELLATION,
+			PaymentGatewayFeature::SUBSCRIPTION_SUSPENSION,
+			PaymentGatewayFeature::SUBSCRIPTION_REACTIVATION,
+			PaymentGatewayFeature::SUBSCRIPTION_AMOUNT_CHANGES,
+			PaymentGatewayFeature::SUBSCRIPTION_DATE_CHANGES,
+			// PaymentGatewayFeature::SUBSCRIPTION_PAYMENT_METHOD_CHANGE,
+			// PaymentGatewayFeature::SUBSCRIPTION_PAYMENT_METHOD_CHANGE_CUSTOMER,
+			// PaymentGatewayFeature::SUBSCRIPTION_PAYMENT_METHOD_CHANGE_ADMIN,
+			PaymentGatewayFeature::MULTIPLE_SUBSCRIPTIONS,
 		);
 
 		$this->init_settings();
@@ -449,6 +450,11 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			return;
 		}
 
+		if ( $renewal_order->is_paid() ) {
+			$renewal_order->add_order_note( __( 'Unexpected payment for subscription renewal: order is already marked as paid.', 'woocommerce-wayforpay-gateway' ) );
+			return;
+		}
+
 		$subscriptions = wcs_get_subscriptions_for_renewal_order( $renewal_order );
 		$subscription  = reset( $subscriptions );
 
@@ -467,6 +473,22 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			$payload                    = $this->transform_order_to_payload( $renewal_order, $amount );
 			$payload['recToken']        = $rec_token;
 			$payload['clientIpAddress'] = $renewal_order->get_customer_ip_address() ?: ( $_SERVER['SERVER_ADDR'] ?? '127.0.0.1' );
+
+			if (str_contains($payload['clientIpAddress'], ':')) {
+				$payload['clientIpAddress'] = '127.0.0.1';
+			}
+			if (empty ($payload['clientAddress'])) {
+				$payload['clientAddress'] = 'unknown';
+			}
+			if (empty ($payload['clientCity'])) {
+				$payload['clientCity'] = 'unknown';
+			}
+			if (empty ($payload['clientZipCode'])) {
+				$payload['clientZipCode'] = 'unknown';
+			}
+			if (empty ($payload['clientCountry'])) {
+				$payload['clientCountry'] = 'UKR';
+			}
 
 			$result = $this->wayforpay->charge( $payload );
 

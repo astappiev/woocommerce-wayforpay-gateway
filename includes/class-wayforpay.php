@@ -124,7 +124,7 @@ class Wayforpay {
 		$payload['merchantDomainName']            = $payload['merchantDomainName'] ?? $_SERVER['SERVER_NAME'];
 		$payload['apiVersion']                    = 2;
 		$payload['merchantTransactionType']       = 'SALE';
-		$payload['merchantTransactionSecureType'] = 'AUTO';
+		$payload['merchantTransactionSecureType'] = 'NON3DS'; // important, otherwise WayForPay want us to redirect customer to 3DS page
 		$payload['merchantAccount']               = $this->merchant_account;
 		$payload['merchantSignature']             = $this->hash_payload( $payload, self::SIGNATURE_KEYS_PURCHASE );
 
