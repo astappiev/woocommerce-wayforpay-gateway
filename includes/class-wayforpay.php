@@ -77,24 +77,29 @@ class Wayforpay {
 
 	/**
 	 * Purchase request is used to initiate payment with a client on the protected wayforpay site.
+	 * If sent with `recToken`, it returns a url to wayforpay on which the user card details is already prefilled and only CVV is required.
+	 *
+	 * Required payload:
+	 *  - merchantAccount, merchantDomainName, merchantTransactionSecureType, merchantSignature, orderDate, amount, currency, productName[], productPrice[], productCount[]
 	 *
 	 * Documentation:
 	 * https://wiki.wayforpay.com/en/view/852102
 	 *
-	 * @throws Exception
+	 * @param boolean $offline When true, the request will use mobile application flow to receive the payment link directly without POST form and client-side submit.
+	 *
+	 * @throws WayforpayException
 	 */
-	public function purchase( $payload ): array {
+	public function purchase( $payload, bool $offline = true ): array {
 		$payload['merchantDomainName']            = $payload['merchantDomainName'] ?? $_SERVER['SERVER_NAME'];
 		$payload['apiVersion']                    = 2;
 		$payload['merchantTransactionSecureType'] = 'AUTO';
 		$payload['merchantAccount']               = $this->merchant_account;
 		$payload['merchantSignature']             = $this->hash_payload( $payload, self::SIGNATURE_KEYS_PURCHASE );
 
-		// this hack with ?offline is needed to avoid POST form and client-side submit
-		$result = $this->send_request( $payload, self::WAYFORPAY_URL . '?behavior=offline' );
+		$result = $this->send_request( $payload, self::WAYFORPAY_URL . ($offline ? '?behavior=offline' : '') );
 
 		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
-			throw new Exception( $result['reason'] );
+			throw new WayforpayException( $result['reason'], null, $result );
 		}
 
 		return $result;
@@ -104,10 +109,15 @@ class Wayforpay {
 	 * Charge a card using a previously obtained recToken (server-to-server, no customer redirect).
 	 * Used for subscription renewal payments.
 	 *
+	 * Required payload:
+	 *  - transactionType, merchantAccount, merchantDomainName, merchantTransactionType, merchantTransactionSecureType, merchantSignature,
+	 *    apiVersion, orderReference, orderDate, amount, currency, productName[], productPrice[], productCount[], clientFirstName,
+	 *    clientLastName, clientEmail, clientPhone, clientCountry, clientIpAddress
+	 *
 	 * Documentation:
 	 * https://wiki.wayforpay.com/en/view/852194
 	 *
-	 * @throws Exception
+	 * @throws WayforpayException
 	 */
 	public function charge( $payload ): array {
 		$payload['transactionType']               = 'CHARGE';
@@ -121,7 +131,7 @@ class Wayforpay {
 		$result = $this->send_request( $payload );
 
 		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
-			throw new Exception( $result['reason'] );
+			throw new WayforpayException( $result['reason'], null, $result );
 		}
 
 		return $result;
@@ -133,7 +143,7 @@ class Wayforpay {
 	 * Documentation:
 	 * https://wiki.wayforpay.com/en/view/852115
 	 *
-	 * @throws Exception
+	 * @throws WayforpayException
 	 */
 	public function refund( $payload ): array {
 		$payload['transactionType']   = 'REFUND';
@@ -144,11 +154,11 @@ class Wayforpay {
 		$result = $this->send_request( $payload );
 
 		if ( ! empty( $result['merchantSignature'] ) && ! $this->verify_payload( $result, self::SIGNATURE_KEYS_REFUND_RESPONSE ) ) {
-			throw new Exception( __( 'Refund response signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
+			throw new WayforpayException( __( 'Refund response signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
 		}
 
 		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
-			throw new Exception( $result['reason'] );
+			throw new WayforpayException( $result['reason'], null, $result );
 		}
 
 		return $result;
@@ -160,7 +170,7 @@ class Wayforpay {
 	 * Documentation:
 	 * https://wiki.wayforpay.com/en/view/852117
 	 *
-	 * @throws Exception
+	 * @throws WayforpayException
 	 */
 	public function check_status( string $order_reference ): array {
 		$payload                      = array(
@@ -175,7 +185,7 @@ class Wayforpay {
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws WayforpayException
 	 */
 	private function send_request( $body, $endpoint = self::WAYFORPAY_API ): array {
 		$args = array(
@@ -188,13 +198,13 @@ class Wayforpay {
 
 		$response = wp_safe_remote_post( $endpoint, $args );
 		if ( is_wp_error( $response ) ) {
-			throw new Exception( $response->get_error_message() );
+			throw new WayforpayException( $response->get_error_message(), wp_remote_retrieve_response_code( $response ) );
 		}
 
 		$result = json_decode( $response['body'], true );
 
 		if ( ! empty( $result['reasonCode'] ) && $result['reasonCode'] != self::RESPONSE_CODE_OK ) {
-			throw new Exception( $result['reason'] );
+			throw new WayforpayException( $result['reason'], wp_remote_retrieve_response_code( $response ), $result );
 		}
 
 		return $result;

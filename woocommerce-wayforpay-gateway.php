@@ -40,6 +40,7 @@ add_action( 'plugins_loaded', 'woocommerce_wayforpay_gateway_init', 0 );
  * Initialize the WayForPay gateway.
  */
 function woocommerce_wayforpay_gateway_init(): void {
+	require_once WAYFORPAY_DIR . 'includes/class-wayforpay-exception.php';
 	require_once WAYFORPAY_DIR . 'includes/class-wayforpay.php';
 	require_once WAYFORPAY_DIR . 'includes/class-wayforpay-gateway.php';
 	require_once WAYFORPAY_DIR . 'includes/class-wayforpay-gateway-block.php';

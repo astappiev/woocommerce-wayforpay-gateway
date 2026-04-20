@@ -217,7 +217,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		$client_args = array(
 			'clientFirstName' => $order->get_billing_first_name(),
 			'clientLastName'  => $order->get_billing_last_name(),
-			'clientAddress'   => $order->get_billing_address_1() . ' ' . $order->get_billing_address_2(),
+			'clientAddress'   => $order->get_billing_address_1(),
 			'clientCity'      => $order->get_billing_city(),
 			'clientPhone'     => $order->get_billing_phone(),
 			'clientEmail'     => $order->get_billing_email(),
@@ -485,10 +485,8 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 				$subscription->save();
 			}
 		} catch ( Exception $e ) {
-			$renewal_order->update_status(
-				OrderStatus::FAILED,
-				sprintf( __( 'Subscription renewal failed: %s', 'woocommerce-wayforpay-gateway' ), $e->getMessage() )
-			);
+			$renewal_order->update_status( OrderStatus::FAILED);
+			$renewal_order->add_order_note( sprintf( __( 'Subscription renewal failed: %s', 'woocommerce-wayforpay-gateway' ), $e->getMessage() ) );
 		}
 	}
 
