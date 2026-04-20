@@ -17,7 +17,8 @@ final class WayForPay_Gateway_Block extends AbstractPaymentMethodType {
 	private $gateway;
 
 	public function initialize(): void {
-		$this->gateway  = new Wayforpay_Gateway();
+		$gateways = WC()->payment_gateways()->payment_gateways();
+		$this->gateway  = $gateways[ $this->name ];
 		$this->settings = $this->gateway->settings;
 	}
 
