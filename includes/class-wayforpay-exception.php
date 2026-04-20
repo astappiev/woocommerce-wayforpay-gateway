@@ -1,20 +1,24 @@
 <?php
 
 class WayforpayException extends Exception {
-	protected final int|string|null $statusCode;
-	protected final array|null $body;
+	private ?array $response;
 
-	public function __construct( $message, $statusCode = null, $body = null ) {
+	/**
+	 * @param string|array $message  The exception message or the full response array from WayForPay API.
+	 *   If $message is an array, it will be treated as the response and the message will be extracted from the 'reason' key if available.
+	 * @param array|null   $response Optional. The full response array from WayForPay API if $message is a string.
+	 */
+	public function __construct( string|array $message, ?array $response = null ) {
+		if ( is_array( $message ) ) {
+			$response = $message;
+			$message  = empty( $response['reason'] ) ? '' : $response['reason'];
+		}
+
 		parent::__construct( $message );
-		$this->statusCode = $statusCode;
-		$this->body       = $body;
+		$this->response = $response;
 	}
 
-	public function getStatusCode(): int|string|null {
-		return $this->statusCode;
-	}
-
-	public function getBody(): array|null {
-		return $this->body;
+	public function getResponse(): ?array {
+		return $this->response;
 	}
 }

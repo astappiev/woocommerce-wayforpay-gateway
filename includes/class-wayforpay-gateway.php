@@ -247,7 +247,8 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 				'result'   => 'success',
 				'redirect' => $result['url'],
 			);
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
+			wc_get_logger()->error( 'Failed to process payment: ' . $e->getMessage(), array( 'source' => $this->id ) );
 			wc_add_notice( 'Request error (' . $e->getMessage() . ')', 'error' );
 			return false;
 		}
@@ -261,7 +262,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 
 		try {
 			if ( empty( $order->get_transaction_id() ) ) {
-				throw new Exception( __( 'Transaction not found.', 'woocommerce-wayforpay-gateway' ) );
+				throw new WayforpayException( __( 'Transaction not found.', 'woocommerce-wayforpay-gateway' ) );
 			}
 
 			$amount   = $amount ?: $order->get_total();
@@ -284,9 +285,10 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 					$order->add_order_note( sprintf( __( 'Refunded %1$s %2$s.', 'woocommerce-wayforpay-gateway' ), $amount, $currency ) );
 					return true;
 				default:
-					throw new Exception( sprintf( __( 'Refund failed: %1$s', 'woocommerce-wayforpay-gateway' ), $result ) );
+					throw new WayforpayException( sprintf( __( 'Refund failed: %1$s', 'woocommerce-wayforpay-gateway' ), $result['reason'] ), $result );
 			}
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
+			wc_get_logger()->error( 'Failed to process refund: ' . $e->getMessage(), array( 'source' => $this->id ) );
 			wc_add_notice( 'Refund error (' . $e->getMessage() . ')', 'error' );
 			return false;
 		}
@@ -305,13 +307,19 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Process the service callback and update the order status accordingly.
 	 *
-	 * @throws Exception
+	 * @throws WayforpayException
 	 */
-	protected function handle_service_callback( $response ): WC_Order {
-		[$order_id, $suffix] = explode( '_', $response['orderReference'], 2 );
-		$order               = wc_get_order( $order_id );
-		if ( $order === false ) {
-			throw new Exception( __( 'An error has occurred during processing. Please contact us to ensure your order has submitted.', 'woocommerce-wayforpay-gateway' ) );
+	protected function handle_service_callback( $response, $order = null ): WC_Order {
+		if ( ! $order ) {
+			[$order_id, $suffix] = explode( '_', $response['orderReference'], 2 );
+			$order               = wc_get_order( $order_id );
+			if ( $order === false ) {
+				throw new WayforpayException( __( 'An error has occurred during processing. Please contact us to ensure your order has submitted.', 'woocommerce-wayforpay-gateway' ), $response );
+			}
+		}
+
+		if ( empty( $response['transactionStatus'] ) ) {
+			throw new WayforpayException( __( 'Transaction status is missing in the response.', 'woocommerce-wayforpay-gateway' ), $response );
 		}
 
 		switch ( $response['transactionStatus'] ) {
@@ -378,26 +386,29 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 
 	/**
 	 * This will be called when the user returns from gateway.
+	 * It will verify the callback, process the response and redirect to the appropriate page with a notice if needed.
 	 */
 	function receive_return_callback(): void {
 		try {
 			if ( empty( $_POST ) ) {
-				throw new Exception( __( 'An error has occurred during redirect, if it persists, please contact us.', 'woocommerce-wayforpay-gateway' ) );
+				throw new WayforpayException( __( 'An error has occurred during redirect, if it persists, please contact us.', 'woocommerce-wayforpay-gateway' ) );
 			}
 
-			if ( ! $this->wayforpay->verify_callback( $_POST ) ) {
-				throw new Exception( __( 'An error has occurred during processing. Signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
-			}
-
+			$this->wayforpay->verify_callback( $_POST );
 			$order = $this->handle_service_callback( $_POST );
 			wp_safe_redirect( $this->get_callback_url( $order ) );
 		} catch ( Exception $e ) {
+			wc_get_logger()->error( 'Error on processing gateway return callback: ' . $e->getMessage(), array( 'source' => $this->id ) );
 			wc_add_notice( $e->getMessage(), 'error' );
 			wp_safe_redirect( wc_get_checkout_url() );
 		}
 		exit;
 	}
 
+	/**
+	 * This will be called on the thank-you page. If the order is not paid, it will display an error message.
+	 * If the order is paid but not marked as such, it will mark it as paid and empty the cart.
+	 */
 	function post_payment_request( $order_id ): void {
 		$order = wc_get_order( $order_id );
 		if ( ! $order || $order->get_payment_method() !== $this->id ) {
@@ -420,21 +431,21 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 
 	/**
 	 * This will be called when the service callback is received.
+	 * It will verify the callback, process the response and update the order status accordingly.
+	 * Finally, it will send a response back to WayForPay.
 	 */
 	function receive_service_callback(): void {
 		$payload = json_decode( file_get_contents( 'php://input' ), true );
 
 		try {
-			if ( ! $this->wayforpay->verify_callback( $payload ) ) {
-				throw new Exception( __( 'An error has occurred during processing. Signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
-			}
-
+			$this->wayforpay->verify_callback( $payload );
 			$this->handle_service_callback( $payload );
 
 			$result = $this->wayforpay->respond_callback( $payload );
 			echo json_encode( $result );
 		} catch ( Exception $e ) {
 			echo $e->getMessage();
+			wc_get_logger()->error( 'Failed to process service callback: ' . $e->getMessage(), array( 'source' => $this->id ) );
 		}
 		exit;
 	}
@@ -450,65 +461,49 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			return;
 		}
 
-		if ( $renewal_order->is_paid() ) {
-			$renewal_order->add_order_note( __( 'Unexpected payment for subscription renewal: order is already marked as paid.', 'woocommerce-wayforpay-gateway' ) );
-			return;
-		}
-
-		$subscriptions = wcs_get_subscriptions_for_renewal_order( $renewal_order );
-		$subscription  = reset( $subscriptions );
-
-		if ( ! $subscription ) {
-			$renewal_order->update_status( OrderStatus::FAILED, __( 'Subscription not found for this renewal order.', 'woocommerce-wayforpay-gateway' ) );
-			return;
-		}
-
-		$rec_token = $subscription->get_meta( '_wayforpay_rec_token' );
-		if ( empty( $rec_token ) ) {
-			$renewal_order->update_status( OrderStatus::FAILED, __( 'No saved payment token found. The customer must update their payment method.', 'woocommerce-wayforpay-gateway' ) );
-			return;
-		}
-
 		try {
+			if ( $renewal_order->is_paid() ) {
+				throw new WayforpayException( __( 'Unexpected subscription payment: order is already marked as paid.', 'woocommerce-wayforpay-gateway' ) );
+			}
+
+			$subscriptions = wcs_get_subscriptions_for_renewal_order( $renewal_order );
+			$subscription  = array_pop( $subscriptions );
+			if ( ! $subscription ) {
+				throw new WayforpayException( __( 'Subscription not found for this renewal order.', 'woocommerce-wayforpay-gateway' ) );
+			}
+
+			$rec_token = $subscription->get_meta( '_wayforpay_rec_token' );
+			if ( empty( $rec_token ) ) {
+				throw new WayforpayException( __( 'No saved payment token found. The customer must update their payment method.', 'woocommerce-wayforpay-gateway' ) );
+			}
+
 			$payload                    = $this->transform_order_to_payload( $renewal_order, $amount );
 			$payload['recToken']        = $rec_token;
 			$payload['clientIpAddress'] = $renewal_order->get_customer_ip_address() ?: ( $_SERVER['SERVER_ADDR'] ?? '127.0.0.1' );
 
-			if (str_contains($payload['clientIpAddress'], ':')) {
+			if ( str_contains( $payload['clientIpAddress'], ':' ) ) {
 				$payload['clientIpAddress'] = '127.0.0.1';
 			}
-			if (empty ($payload['clientAddress'])) {
+			if ( empty( $payload['clientAddress'] ) ) {
 				$payload['clientAddress'] = 'unknown';
 			}
-			if (empty ($payload['clientCity'])) {
+			if ( empty( $payload['clientCity'] ) ) {
 				$payload['clientCity'] = 'unknown';
 			}
-			if (empty ($payload['clientZipCode'])) {
+			if ( empty( $payload['clientZipCode'] ) ) {
 				$payload['clientZipCode'] = 'unknown';
 			}
-			if (empty ($payload['clientCountry'])) {
+			if ( empty( $payload['clientCountry'] ) ) {
 				$payload['clientCountry'] = 'UKR';
 			}
 
 			$result = $this->wayforpay->charge( $payload );
 
-			$renewal_order->payment_complete( $result['orderReference'] );
-			$renewal_order->add_order_note(
-				sprintf(
-					__( 'Subscription renewal payment successful: %1$s %2$s.', 'woocommerce-wayforpay-gateway' ),
-					$result['amount'],
-					$result['currency']
-				)
-			);
-
-			// WayForPay may rotate the recToken; update the stored token if a new one is returned.
-			if ( ! empty( $result['recToken'] ) ) {
-				$subscription->update_meta_data( '_wayforpay_rec_token', $result['recToken'] );
-				$subscription->save();
-			}
+			$this->handle_service_callback( $result, $renewal_order );
 		} catch ( Exception $e ) {
-			$renewal_order->update_status( OrderStatus::FAILED);
-			$renewal_order->add_order_note( sprintf( __( 'Subscription renewal failed: %s', 'woocommerce-wayforpay-gateway' ), $e->getMessage() ) );
+			$renewal_order->update_status( OrderStatus::FAILED );
+			$renewal_order->add_order_note( sprintf( __( 'Subscription payment failed: %s', 'woocommerce-wayforpay-gateway' ), $e->getMessage() ) );
+			wc_get_logger()->error( 'Failed to process subscription payment: ' . $e->getMessage(), array( 'source' => $this->id ) );
 		}
 	}
 
@@ -535,7 +530,12 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		return $page_list;
 	}
 
+	/**
+	 * Convert country code from ISO 3166-1 alpha-2 to ISO 3166-1 alpha-3 format, as required by WayForPay.
+	 * If the country code is not found in the mapping, it returns 'UKR' as default value.
+	 */
 	private function country_alpha2_to_alpha3( string $alpha2 ): string {
+		// phpcs:disable
 		static $map = array(
 			'AF' => 'AFG', 'AX' => 'ALA', 'AL' => 'ALB', 'DZ' => 'DZA', 'AS' => 'ASM',
 			'AD' => 'AND', 'AO' => 'AGO', 'AI' => 'AIA', 'AQ' => 'ATA', 'AG' => 'ATG',
@@ -588,6 +588,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			'VE' => 'VEN', 'VN' => 'VNM', 'VG' => 'VGB', 'VI' => 'VIR', 'WF' => 'WLF',
 			'EH' => 'ESH', 'YE' => 'YEM', 'ZM' => 'ZMB', 'ZW' => 'ZWE',
 		);
+		// phpcs:enable
 		return $map[ strtoupper( $alpha2 ) ] ?? 'UKR';
 	}
 }

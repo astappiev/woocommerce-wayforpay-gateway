@@ -9,6 +9,7 @@ class Wayforpay {
 
 	// https://wiki.wayforpay.com/en/view/852131
 	const string TRANSACTION_APPROVED             = 'Approved';
+	const string TRANSACTION_IN_PROCESSING        = 'InProcessing';
 	const string TRANSACTION_REFUNDED             = 'Refunded';
 	const string TRANSACTION_REFUND_IN_PROCESSING = 'RefundInProcessing'; // In case when not enough funds on shop balance
 	const string TRANSACTION_VOIDED               = 'Voided';
@@ -96,11 +97,7 @@ class Wayforpay {
 		$payload['merchantAccount']               = $this->merchant_account;
 		$payload['merchantSignature']             = $this->hash_payload( $payload, self::SIGNATURE_KEYS_PURCHASE );
 
-		$result = $this->send_request( $payload, self::WAYFORPAY_URL . ($offline ? '?behavior=offline' : '') );
-
-		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
-			throw new WayforpayException( $result['reason'], null, $result );
-		}
+		$result = $this->send_request( $payload, self::WAYFORPAY_URL . ( $offline ? '?behavior=offline' : '' ) );
 
 		return $result;
 	}
@@ -130,8 +127,8 @@ class Wayforpay {
 
 		$result = $this->send_request( $payload );
 
-		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
-			throw new WayforpayException( $result['reason'], null, $result );
+		if ( ! empty( $result['merchantSignature'] ) && ! $this->verify_payload( $result, self::SIGNATURE_KEYS_SERVICE_CALLBACK ) ) {
+			throw new WayforpayException( __( 'Signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
 		}
 
 		return $result;
@@ -154,11 +151,7 @@ class Wayforpay {
 		$result = $this->send_request( $payload );
 
 		if ( ! empty( $result['merchantSignature'] ) && ! $this->verify_payload( $result, self::SIGNATURE_KEYS_REFUND_RESPONSE ) ) {
-			throw new WayforpayException( __( 'Refund response signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
-		}
-
-		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
-			throw new WayforpayException( $result['reason'], null, $result );
+			throw new WayforpayException( __( 'Signature is not valid.', 'woocommerce-wayforpay-gateway' ) );
 		}
 
 		return $result;
@@ -198,20 +191,33 @@ class Wayforpay {
 
 		$response = wp_safe_remote_post( $endpoint, $args );
 		if ( is_wp_error( $response ) ) {
-			throw new WayforpayException( $response->get_error_message(), wp_remote_retrieve_response_code( $response ) );
+			throw new WayforpayException( $response->get_error_message() );
 		}
 
 		$result = json_decode( $response['body'], true );
 
 		if ( ! empty( $result['reasonCode'] ) && $result['reasonCode'] != self::RESPONSE_CODE_OK ) {
-			throw new WayforpayException( $result['reason'], wp_remote_retrieve_response_code( $response ), $result );
+			throw new WayforpayException( $result );
+		}
+
+		if ( ! empty( $result['transactionStatus'] ) && $result['transactionStatus'] === self::TRANSACTION_DECLINED ) {
+			throw new WayforpayException( $result );
 		}
 
 		return $result;
 	}
 
+	/**
+	 * @throws WayforpayException when signature is not valid
+	 */
 	public function verify_callback( $payload ): bool {
-		return $this->verify_payload( $payload, self::SIGNATURE_KEYS_SERVICE_CALLBACK );
+		$valid = $this->verify_payload( $payload, self::SIGNATURE_KEYS_SERVICE_CALLBACK );
+
+		if ( ! $valid ) {
+			throw new WayforpayException( __( 'Signature is not valid.', 'woocommerce-wayforpay-gateway' ), $payload );
+		}
+
+		return true;
 	}
 
 	public function respond_callback( $payload ): array {
