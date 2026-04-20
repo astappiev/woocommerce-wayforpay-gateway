@@ -28,9 +28,9 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			PaymentGatewayFeature::SUBSCRIPTION_REACTIVATION,
 			PaymentGatewayFeature::SUBSCRIPTION_AMOUNT_CHANGES,
 			PaymentGatewayFeature::SUBSCRIPTION_DATE_CHANGES,
-			// PaymentGatewayFeature::SUBSCRIPTION_PAYMENT_METHOD_CHANGE,
+			// PaymentGatewayFeature::SUBSCRIPTION_PAYMENT_METHOD_CHANGE, // not supported because of current process_payment flow, it should return success after the payment is complete
 			// PaymentGatewayFeature::SUBSCRIPTION_PAYMENT_METHOD_CHANGE_CUSTOMER,
-			// PaymentGatewayFeature::SUBSCRIPTION_PAYMENT_METHOD_CHANGE_ADMIN,
+			// PaymentGatewayFeature::SUBSCRIPTION_PAYMENT_METHOD_CHANGE_ADMIN, // not currently allowed, user need to make a payment using new method to change it
 			PaymentGatewayFeature::MULTIPLE_SUBSCRIPTIONS,
 		);
 
@@ -57,6 +57,7 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 		add_action( 'woocommerce_thankyou', array( $this, 'post_payment_request' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 		add_action( 'woocommerce_scheduled_subscription_payment_' . $this->id, array( $this, 'process_subscription_payment' ), 10, 2 );
+		// add_action( 'woocommerce_subscriptions_changed_failing_payment_method_' . $this->id, array( $this, 'update_subscription_failing_payment_method' ), 10, 2 );
 	}
 
 	function init_form_fields(): void {
@@ -506,6 +507,12 @@ class Wayforpay_Gateway extends WC_Payment_Gateway {
 			wc_get_logger()->error( 'Failed to process subscription payment: ' . $e->getMessage(), array( 'source' => $this->id ) );
 		}
 	}
+
+	// function update_subscription_failing_payment_method( $original_order, $renewal_order ): void {
+	//   // Copy the new token stored on the renewal order back to the original subscription order
+	//	 $renewal_order_token = get_post_meta( $renewal_order->id, '_wayforpay_rec_token', true );
+	//	 update_post_meta( $original_order->id, '_wayforpay_rec_token', $renewal_order_token );
+	// }
 
 	function wayforpay_get_pages( $title = false, $indent = true ): array {
 		$wp_pages  = get_pages( 'sort_column=menu_order' );
